@@ -11,13 +11,13 @@ const inter = Inter({
 
 export const metadata = {
   title: {
-    default: "Orios — Class Portal",
-    template: "%s — Orios",
+    default: "Orios Class",
+    template: "%s — Orios Class",
   },
   description:
     "Your smart class companion. Access notes, track assignments, check schedules, and stay updated.",
   icons: {
-    icon: "/favicon.png",
+    icon: "/orio-square.png",
   },
 };
 

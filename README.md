@@ -2,7 +2,7 @@
   <img src="public/orio.png" alt="Orios" width="80" />
 </p>
 
-<h1 align="center">Orios — Class Portal V2</h1>
+<h1 align="center">Orios Class Portal V2</h1>
 
 <p align="center">
   <em>Your smart class companion — beautifully redesigned from the ground up.</em>

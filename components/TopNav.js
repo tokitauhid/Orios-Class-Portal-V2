@@ -28,11 +28,11 @@ export default function TopNav() {
         <Link href="/" className="flex items-center gap-2.5 group">
           <img
             src="/orio.png"
-            alt="Orios"
+            alt="Orios Class"
             className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-200"
           />
           <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-            Orios
+            Orios Class
           </span>
         </Link>
 

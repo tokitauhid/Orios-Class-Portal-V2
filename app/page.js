@@ -61,7 +61,7 @@ export default function HomePage() {
             <h1 className="text-3xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-3">
               Welcome to{" "}
               <span className="text-indigo-600 dark:text-indigo-400">
-                Orios
+                Orios Class
               </span>
               <img
                 src="/orio.png"
