@@ -67,7 +67,7 @@ Orios-V2/
 - **Bug Fix**: Added `mounted` state check to theme toggle buttons in `TopNav.js` and `page.js` to prevent React hydration mismatches (and crashes caused by Dark Reader).
 - **Bug Fix**: Added `@custom-variant dark` to `globals.css` to properly enable class-based dark mode in Tailwind v4 so it syncs with `next-themes`. Also added `pointer-events-none` and `z-10` to `TopNav` to fix a CSS stacking context issue.
 - **UI & Navigation Overhaul**: Redesigned the mobile homepage to be compact above the fold. Redesigned `BottomNav` to include a prominent center Search FAB and a frosted glass slide-up bottom sheet for the "More" menu. Added the `/more` (settings/navigation) and `/notes` (subject-filtered list) pages.
-
+- **Subject System Core**: Centralized subject data model in `lib/subjects.js`. Updated all pages and mock data to use `subjectId` pointers instead of hardcoded strings. Implemented persistent subject color coding across the app via a React Context (`lib/SubjectContext.js`), with toggles in the BottomNav More menu and More page.
 ## How to use this skill
 - Before writing new code, read this file to understand established patterns.
 - After completing a task, use the `replace_file_content` tool to append a bullet point to the `Implementation Changelog`.

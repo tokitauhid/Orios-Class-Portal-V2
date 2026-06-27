@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { mockFiles } from "@/lib/mock-data";
+import { subjects, getSubject } from "@/lib/subjects";
+import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   FolderOpen,
   FileText,
@@ -22,20 +24,18 @@ const fileTypeConfig = {
 
 export default function FilesPage() {
   const [search, setSearch] = useState("");
-  const [activeSubject, setActiveSubject] = useState("All");
-
-  const subjects = useMemo(() => {
-    const set = new Set(mockFiles.map((f) => f.subject));
-    return ["All", ...Array.from(set).sort()];
-  }, []);
+  const [activeSubject, setActiveSubject] = useState("all");
+  const { getColor } = useSubjectColors();
 
   const filteredFiles = useMemo(() => {
     return mockFiles.filter((file) => {
-      const matchSubject = activeSubject === "All" || file.subject === activeSubject;
+      const matchSubject = activeSubject === "all" || file.subjectId === activeSubject;
+      const subject = getSubject(file.subjectId);
+      const subjectCode = subject ? subject.code : "";
       const matchSearch =
         !search ||
         file.name.toLowerCase().includes(search.toLowerCase()) ||
-        file.subject.toLowerCase().includes(search.toLowerCase()) ||
+        subjectCode.toLowerCase().includes(search.toLowerCase()) ||
         file.uploadedBy.toLowerCase().includes(search.toLowerCase());
       return matchSubject && matchSearch;
     });
@@ -53,7 +53,7 @@ export default function FilesPage() {
                 Files
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-500 mt-0.5">
-                {filteredFiles.length} {filteredFiles.length === 1 ? "file" : "files"}{activeSubject !== "All" ? ` in ${activeSubject}` : ""}
+                {filteredFiles.length} {filteredFiles.length === 1 ? "file" : "files"}{activeSubject !== "all" ? ` in ${getSubject(activeSubject)?.code || activeSubject}` : ""}
               </p>
             </div>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400">
@@ -75,19 +75,34 @@ export default function FilesPage() {
 
           {/* Subject Filter Pills */}
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-5 px-5 md:mx-0 md:px-0">
-            {subjects.map((subject) => (
-              <button
-                key={subject}
-                onClick={() => setActiveSubject(subject)}
-                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
-                  activeSubject === subject
-                    ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm"
-                    : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
-                }`}
-              >
-                {subject}
-              </button>
-            ))}
+            <button
+              onClick={() => setActiveSubject("all")}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                activeSubject === "all"
+                  ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm"
+                  : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+              }`}
+            >
+              All
+            </button>
+            {subjects.map((subject) => {
+              const colors = getColor(subject.id);
+              const isActive = activeSubject === subject.id;
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => setActiveSubject(subject.id)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                    isActive
+                      ? `${colors.pillActive} text-white shadow-sm`
+                      : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white/70" : colors.dot}`} />
+                  {subject.code}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

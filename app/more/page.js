@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTheme } from "@/components/ThemeProvider";
+import { useSubjectColors } from "@/lib/SubjectContext";
 import { useState, useEffect } from "react";
 import {
   FileText,
@@ -14,6 +15,7 @@ import {
   Moon,
   Settings,
   Info,
+  Palette,
 } from "lucide-react";
 
 const menuItems = [
@@ -27,6 +29,7 @@ const menuItems = [
 
 export default function MorePage() {
   const { theme, toggleTheme } = useTheme();
+  const { subjectColorsEnabled, toggleSubjectColors } = useSubjectColors();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -100,6 +103,28 @@ export default function MorePage() {
                 <span className="text-xs text-zinc-500 dark:text-zinc-500">
                   Switch appearance
                 </span>
+              </div>
+            </button>
+
+            {/* Subject Colors Toggle */}
+            <button
+              onClick={toggleSubjectColors}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 group"
+            >
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
+                <Palette size={20} strokeWidth={1.8} />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 block">
+                  Subject Colors
+                </span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-500">
+                  Color-code by subject
+                </span>
+              </div>
+              {/* Toggle switch */}
+              <div className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors duration-200 ${subjectColorsEnabled ? "bg-indigo-500" : "bg-zinc-300 dark:bg-zinc-700"}`}>
+                <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${subjectColorsEnabled ? "translate-x-4" : "translate-x-0"}`} />
               </div>
             </button>
 

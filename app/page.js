@@ -9,6 +9,7 @@ import {
   mockCountdowns,
   mockSchedule,
 } from "@/lib/mock-data";
+import { getSubject } from "@/lib/subjects";
 import {
   BookOpen,
   ClipboardList,
@@ -171,15 +172,18 @@ export default function HomePage() {
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {mockCountdowns.map((item) => (
-              <CountdownCard
-                key={item.id}
-                title={item.title}
-                date={item.date}
-                type={item.type}
-                subject={item.subject}
-              />
-            ))}
+            {mockCountdowns.map((item) => {
+              const subject = getSubject(item.subjectId);
+              return (
+                <CountdownCard
+                  key={item.id}
+                  title={item.title}
+                  date={item.date}
+                  type={item.type}
+                  subject={subject ? subject.code : item.subjectId}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -197,16 +201,19 @@ export default function HomePage() {
           <div className="rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/40 p-4 md:p-5">
             {mockSchedule.length > 0 ? (
               <div>
-                {mockSchedule.map((cls) => (
-                  <ScheduleCard
-                    key={cls.id}
-                    time={cls.time}
-                    subject={cls.subject}
-                    teacher={cls.teacher}
-                    room={cls.room}
-                    type={cls.type}
-                  />
-                ))}
+                {mockSchedule.map((cls) => {
+                  const subject = getSubject(cls.subjectId);
+                  return (
+                    <ScheduleCard
+                      key={cls.id}
+                      time={cls.time}
+                      subject={subject ? subject.code : cls.subjectId}
+                      teacher={cls.teacher}
+                      room={cls.room}
+                      type={cls.type}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-zinc-400 dark:text-zinc-600">

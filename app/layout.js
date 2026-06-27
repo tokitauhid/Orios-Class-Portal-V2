@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { SubjectProvider } from "@/lib/SubjectContext";
 import AppShell from "@/components/AppShell";
 
 const inter = Inter({
@@ -36,7 +37,9 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AppShell>{children}</AppShell>
+          <SubjectProvider>
+            <AppShell>{children}</AppShell>
+          </SubjectProvider>
         </ThemeProvider>
       </body>
     </html>

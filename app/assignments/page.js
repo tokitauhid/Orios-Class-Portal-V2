@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { mockAssignments } from "@/lib/mock-data";
+import { subjects, getSubject } from "@/lib/subjects";
+import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   ClipboardList,
   Clock,
   CheckCircle2,
   Award,
-  AlertCircle,
 } from "lucide-react";
 
 const statusConfig = {
@@ -31,17 +32,20 @@ const statusConfig = {
   },
 };
 
-const filters = ["All", "Pending", "Submitted", "Graded"];
+const statusFilters = ["All", "Pending", "Submitted", "Graded"];
 
 export default function AssignmentsPage() {
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeStatus, setActiveStatus] = useState("All");
+  const [activeSubject, setActiveSubject] = useState("all");
+  const { getColor } = useSubjectColors();
 
   const filteredAssignments = useMemo(() => {
-    if (activeFilter === "All") return mockAssignments;
-    return mockAssignments.filter(
-      (a) => a.status === activeFilter.toLowerCase()
-    );
-  }, [activeFilter]);
+    return mockAssignments.filter((a) => {
+      const matchStatus = activeStatus === "All" || a.status === activeStatus.toLowerCase();
+      const matchSubject = activeSubject === "all" || a.subjectId === activeSubject;
+      return matchStatus && matchSubject;
+    });
+  }, [activeStatus, activeSubject]);
 
   // Sort: pending first (by due date asc), then submitted, then graded
   const sortedAssignments = useMemo(() => {
@@ -74,14 +78,14 @@ export default function AssignmentsPage() {
             </div>
           </div>
 
-          {/* Filter Pills */}
+          {/* Status Filter Pills */}
           <div className="flex gap-2">
-            {filters.map((filter) => (
+            {statusFilters.map((filter) => (
               <button
                 key={filter}
-                onClick={() => setActiveFilter(filter)}
+                onClick={() => setActiveStatus(filter)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
-                  activeFilter === filter
+                  activeStatus === filter
                     ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm"
                     : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
                 }`}
@@ -89,6 +93,38 @@ export default function AssignmentsPage() {
                 {filter}
               </button>
             ))}
+          </div>
+
+          {/* Subject Filter Pills */}
+          <div className="flex gap-2 mt-2 overflow-x-auto pb-1 -mx-5 px-5 md:mx-0 md:px-0">
+            <button
+              onClick={() => setActiveSubject("all")}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                activeSubject === "all"
+                  ? "bg-zinc-700 dark:bg-zinc-600 text-white shadow-sm"
+                  : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+              }`}
+            >
+              All Subjects
+            </button>
+            {subjects.map((subject) => {
+              const colors = getColor(subject.id);
+              const isActive = activeSubject === subject.id;
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => setActiveSubject(subject.id)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                    isActive
+                      ? `${colors.pillActive} text-white shadow-sm`
+                      : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white/70" : colors.dot}`} />
+                  {subject.code}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -104,7 +140,9 @@ export default function AssignmentsPage() {
           <div className="space-y-2">
             {sortedAssignments.map((assignment) => {
               const config = statusConfig[assignment.status];
-              const StatusIcon = config.icon;
+              const subject = getSubject(assignment.subjectId);
+              const subjectCode = subject ? subject.code : assignment.subjectId;
+              const subjectColors = getColor(assignment.subjectId);
               const dueDate = new Date(assignment.dueDate);
               const now = new Date();
               const isPast = dueDate < now;
@@ -134,7 +172,8 @@ export default function AssignmentsPage() {
                       </span>
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-1">
-                      {assignment.subject} · {assignment.description}
+                      <span className={`font-medium ${subjectColors.muted}`}>{subjectCode}</span>
+                      {" · "}{assignment.description}
                     </p>
                   </div>
 
