@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/Tailwind-4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/License-GPL_v3-blue?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
 </p>
 
 ---
@@ -56,4 +56,4 @@ Open [localhost:3000](http://localhost:3000) and you're good to go.
 
 ## 📄 License
 
-[GPL-3.0](LICENSE) — Built with ♥.
+[MIT](LICENSE) — Built with ♥.
