@@ -1,17 +1,59 @@
-# Orios Portal V2
+<p align="center">
+  <img src="public/orio.png" alt="Orios" width="80" />
+</p>
 
-This repository contains the completely overhauled, modern, and fluid version of the Orios Class Portal.
+<h1 align="center">Orios — Class Portal V2</h1>
 
-## Tech Stack
-- **Frontend**: Next.js (App Router) + React
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Database, Auth & Storage**: Supabase (PostgreSQL)
+<p align="center">
+  <em>Your smart class companion — beautifully redesigned from the ground up.</em>
+</p>
 
-## Project Goals
-1. **Performance**: Blazing fast load times with no unnecessary client-side bundle bloat.
-2. **Design**: A clean, flat, modern aesthetic avoiding shadows and heavy borders.
-3. **Responsiveness**: True mobile-first fluid design that scales beautifully to desktop.
-4. **Data Management**: Leveraging a real relational database (Postgres) for efficient sorting, filtering, and data integrity, moving away from unstructured KV stores.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/Tailwind-4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/License-GPL_v3-blue?style=flat-square" alt="License" />
+</p>
 
-Please refer to `plan.md` for the complete implementation strategy and phased roadmap.
+---
+
+## ✨ Features
+
+| | Feature | Description |
+|---|---|---|
+| 📝 | **Notes** | Subject-wise notes, links, docs & resources |
+| 📋 | **Assignments** | Track assignments with due dates & status |
+| 🧪 | **Lab Reports** | Organized lab report management |
+| 📅 | **Calendar & Routine** | Events, weekly schedule & important dates |
+| ⏳ | **Exam Countdown** | Live countdown timers for deadlines |
+| 👩‍🏫 | **Teacher Directory** | Contact info for all faculty |
+| 📂 | **File Sharing** | Share & download class materials |
+| 🔍 | **Global Search** | Find anything instantly with `⌘K` |
+| 🌙 | **Dark / Light Mode** | System-aware theme switching |
+
+## 🛠 Tech Stack
+
+- **Framework** — Next.js 16 (App Router)
+- **UI** — React 19 + Tailwind CSS 4
+- **Icons** — Lucide React
+- **Fonts** — Inter (Google Fonts)
+
+## 🚀 Getting Started
+
+```bash
+# Clone the repo
+git clone https://github.com/tokitauhid/Orios-V2.git
+cd Orios-V2
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+```
+
+Open [localhost:3000](http://localhost:3000) and you're good to go.
+
+## 📄 License
+
+[GPL-3.0](LICENSE) — Built with ♥.

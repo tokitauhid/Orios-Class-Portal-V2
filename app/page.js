@@ -225,7 +225,7 @@ export default function HomePage() {
         <footer className="border-t border-zinc-200 dark:border-zinc-800/40 pt-6 pb-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-zinc-400 dark:text-zinc-600">
-              Built with ♥ for Section D
+              Built with ♥
             </p>
             {/* Mobile theme toggle (since it's not in bottom nav) */}
             <button
