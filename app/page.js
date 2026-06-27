@@ -4,18 +4,15 @@ import { useTheme } from "@/components/ThemeProvider";
 import StatCard from "@/components/StatCard";
 import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
-import FeatureCard from "@/components/FeatureCard";
 import {
   mockStats,
   mockCountdowns,
   mockSchedule,
-  mockFeatures,
 } from "@/lib/mock-data";
 import {
   BookOpen,
   ClipboardList,
   Clock,
-  StickyNote,
   Sun,
   Moon,
   Search,
@@ -54,7 +51,36 @@ export default function HomePage() {
           }}
         />
 
-        <div className="relative max-w-7xl mx-auto px-5 md:px-6 pt-12 md:pt-20 pb-8 md:pb-14">
+        {/* Mobile: Compact greeting */}
+        <div className="relative md:hidden px-5 pt-5 pb-4">
+          <div className="flex items-center justify-between animate-fade-in-up">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-500/20">
+                  <span className="w-1 h-1 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse" />
+                  Live
+                </span>
+              </div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                Orios Class
+              </h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                {todayDate}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <img
+                src="/orio.png"
+                alt="Orio"
+                className="w-10 h-10 object-contain"
+                style={{ transform: "rotate(12deg)" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: Full hero */}
+        <div className="relative hidden md:block max-w-7xl mx-auto px-6 pt-20 pb-14">
           {/* Badge */}
           <div className="animate-fade-in-up">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-500/20 mb-4">
@@ -65,7 +91,7 @@ export default function HomePage() {
 
           {/* Title */}
           <div className="animate-fade-in-up delay-1">
-            <h1 className="text-3xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-3">
+            <h1 className="text-5xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-3">
               Welcome to{" "}
               <span className="text-indigo-600 dark:text-indigo-400">
                 Orios Class
@@ -73,7 +99,7 @@ export default function HomePage() {
               <img
                 src="/orio.png"
                 alt="Orio"
-                className="inline-block w-8 h-8 md:w-10 md:h-10 object-contain ml-2 align-middle"
+                className="inline-block w-10 h-10 object-contain ml-2 align-middle"
                 style={{ transform: "rotate(12deg)" }}
               />
             </h1>
@@ -81,18 +107,18 @@ export default function HomePage() {
 
           {/* Subtitle */}
           <div className="animate-fade-in-up delay-2">
-            <p className="text-base md:text-lg text-zinc-500 dark:text-zinc-400 max-w-md mb-6">
+            <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-md mb-6">
               Your all-in-one class companion. Access notes, track assignments,
               check schedules, and stay updated.
             </p>
           </div>
 
-          {/* Search bar */}
+          {/* Search bar (desktop only) */}
           <div className="animate-fade-in-up delay-3">
             <button className="flex items-center gap-3 w-full max-w-md px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 text-zinc-400 dark:text-zinc-600 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-200 text-sm">
               <Search size={16} strokeWidth={2} />
               <span className="flex-1 text-left">Search everything...</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-400 dark:text-zinc-600 font-mono border border-zinc-200 dark:border-zinc-700">
+              <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-400 dark:text-zinc-600 font-mono border border-zinc-200 dark:border-zinc-700">
                 ⌘K
               </kbd>
             </button>
@@ -104,7 +130,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-5 md:px-6 space-y-8 md:space-y-10 pb-10">
         {/* ===== Stats Strip ===== */}
         <section className="animate-fade-in-up delay-4">
-          <div className="flex gap-3 overflow-x-auto snap-x-mandatory pb-1 -mx-5 px-5 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible">
+          <div className="grid grid-cols-3 gap-2 md:gap-3 md:grid-cols-3">
             <StatCard
               icon={BookOpen}
               value={mockStats.classesToday}
@@ -122,12 +148,6 @@ export default function HomePage() {
               value={mockStats.upcomingEvents}
               label="Upcoming"
               href="/calendar"
-            />
-            <StatCard
-              icon={StickyNote}
-              value={mockStats.totalNotes}
-              label="Total Notes"
-              href="/notes"
             />
           </div>
         </section>
@@ -197,36 +217,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ===== Quick Access ===== */}
-        <section className="animate-fade-in-up">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                Quick Access
-              </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
-                Jump to what you need
-              </p>
-            </div>
-            <img
-              src="/pucu.png"
-              alt=""
-              className="w-10 h-10 object-contain opacity-60 hidden md:block"
-              style={{ transform: "rotate(5deg)" }}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {mockFeatures.map((feature) => (
-              <FeatureCard
-                key={feature.title}
-                title={feature.title}
-                description={feature.description}
-                href={feature.href}
-                icon={feature.icon}
-              />
-            ))}
-          </div>
-        </section>
 
         {/* ===== Footer ===== */}
         <footer className="border-t border-zinc-200 dark:border-zinc-800/40 pt-6 pb-4">
