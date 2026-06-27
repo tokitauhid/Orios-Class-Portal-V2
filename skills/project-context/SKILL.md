@@ -66,6 +66,7 @@ Orios-V2/
 - **UI Bootstrap**: Bootstrapped Next.js 15 app. Built custom Tailwind v4 theme, `ThemeProvider`, mobile `BottomNav`, desktop `TopNav`, and full homepage (`app/page.js`) with responsive card components.
 - **Bug Fix**: Added `mounted` state check to theme toggle buttons in `TopNav.js` and `page.js` to prevent React hydration mismatches (and crashes caused by Dark Reader).
 - **Bug Fix**: Added `@custom-variant dark` to `globals.css` to properly enable class-based dark mode in Tailwind v4 so it syncs with `next-themes`. Also added `pointer-events-none` and `z-10` to `TopNav` to fix a CSS stacking context issue.
+- **UI & Navigation Overhaul**: Redesigned the mobile homepage to be compact above the fold. Redesigned `BottomNav` to include a prominent center Search FAB and a frosted glass slide-up bottom sheet for the "More" menu. Added the `/more` (settings/navigation) and `/notes` (subject-filtered list) pages.
 
 ## How to use this skill
 - Before writing new code, read this file to understand established patterns.
