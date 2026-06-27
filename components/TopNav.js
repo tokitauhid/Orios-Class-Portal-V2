@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
 import { Sun, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const navLinks = [
   { label: "Notes", href: "/notes" },
@@ -17,13 +18,18 @@ const navLinks = [
 export default function TopNav() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <nav className="hidden md:block sticky top-0 z-50">
       {/* Glassmorphism backdrop */}
-      <div className="absolute inset-0 bg-white/70 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/50" />
+      <div className="absolute inset-0 pointer-events-none bg-white/70 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/50" />
 
-      <div className="relative max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <img
@@ -64,7 +70,11 @@ export default function TopNav() {
           className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
           aria-label="Toggle theme"
         >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {mounted ? (
+            theme === "dark" ? <Sun size={18} /> : <Moon size={18} />
+          ) : (
+            <div className="w-[18px] h-[18px]" />
+          )}
         </button>
       </div>
     </nav>

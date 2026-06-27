@@ -21,8 +21,15 @@ import {
   Search,
 } from "lucide-react";
 
+import { useState, useEffect } from "react";
+
 export default function HomePage() {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const todayDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -233,7 +240,11 @@ export default function HomePage() {
               className="md:hidden p-2 rounded-lg text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {mounted ? (
+                theme === "dark" ? <Sun size={16} /> : <Moon size={16} />
+              ) : (
+                <div className="w-[16px] h-[16px]" />
+              )}
             </button>
           </div>
         </footer>

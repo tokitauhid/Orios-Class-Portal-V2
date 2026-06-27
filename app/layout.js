@@ -32,7 +32,6 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
-      data-theme="dark"
       suppressHydrationWarning
     >
       <body className="min-h-full">
