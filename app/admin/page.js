@@ -39,6 +39,30 @@ const quickActions = [
 ];
 
 export default function AdminDashboard() {
+  const now = new Date();
+
+  const getIsOverdue = (item) => {
+    return item.dueDate && new Date(item.dueDate) < now;
+  };
+
+  const pendingAssignments = mockAssignments
+    .filter((a) => a.status === "pending")
+    .map((a) => ({ ...a, type: "Assignment" }));
+
+  const pendingLabReports = mockLabReports
+    .filter((r) => r.status === "pending")
+    .map((r) => ({ ...r, type: "Lab Report" }));
+
+  const combinedPending = [...pendingAssignments, ...pendingLabReports].sort((a, b) => {
+    const aOverdue = getIsOverdue(a);
+    const bOverdue = getIsOverdue(b);
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+
+  const displayedPending = combinedPending.slice(0, 5);
+
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       {/* Welcome */}
@@ -107,34 +131,44 @@ export default function AdminDashboard() {
           Pending Items
         </h3>
         <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-800/30">
-          {mockAssignments.filter((a) => a.status === "pending").slice(0, 3).map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{item.title}</p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-500">Assignment</p>
-                </div>
-              </div>
-              <span className="text-xs text-zinc-400 dark:text-zinc-600 shrink-0">
-                {new Date(item.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
+          {displayedPending.length === 0 ? (
+            <div className="p-4 text-center text-xs text-zinc-400 dark:text-zinc-600">
+              No pending or overdue items!
             </div>
-          ))}
-          {mockLabReports.filter((r) => r.status === "pending").slice(0, 2).map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{item.title}</p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-500">Lab Report</p>
-                </div>
-              </div>
-              <span className="text-xs text-zinc-400 dark:text-zinc-600 shrink-0">
-                {new Date(item.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-            </div>
-          ))}
+          ) : (
+            displayedPending.map((item) => {
+              const isOverdue = getIsOverdue(item);
+              return (
+                <Link
+                  key={`${item.type}-${item.id}`}
+                  href={item.type === "Assignment" ? "/admin/assignments" : "/admin/lab-reports"}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors duration-150 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      isOverdue ? "bg-rose-500 animate-pulse" : item.type === "Assignment" ? "bg-amber-500" : "bg-emerald-500"
+                    }`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{item.title}</p>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
+                        {item.type} {item.labNumber && `L${item.labNumber}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className={`text-xs shrink-0 font-medium ${isOverdue ? "text-rose-500" : "text-zinc-400 dark:text-zinc-600"}`}>
+                      {isOverdue ? "Overdue" : new Date(item.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                    {isOverdue && (
+                      <span className="text-[9px] text-rose-400 font-mono">
+                        Due: {new Date(item.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

@@ -10,7 +10,6 @@ const subjectOptions = subjects.map((s) => ({ value: s.id, label: s.code }));
 const statusOptions = [
   { value: "pending", label: "Pending" },
   { value: "submitted", label: "Submitted" },
-  { value: "graded", label: "Graded" },
 ];
 
 const columns = [
@@ -31,15 +30,18 @@ const columns = [
   {
     key: "status",
     label: "Status",
-    render: (item) => (
-      <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-        item.status === "pending" ? "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400"
-        : item.status === "submitted" ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-        : "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400"
-      }`}>
-        {item.status}
-      </span>
-    ),
+    render: (item) => {
+      const status = item.status === "pending" && item.dueDate && new Date(item.dueDate) < new Date() ? "overdue" : item.status;
+      return (
+        <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+          status === "pending" ? "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400"
+          : status === "submitted" ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+          : "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400"
+        }`}>
+          {status}
+        </span>
+      );
+    },
   },
 ];
 
@@ -49,7 +51,6 @@ const fields = [
   { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
   { key: "dueDate", label: "Due Date", type: "date", required: true },
   { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
-  { key: "grade", label: "Grade (if graded)", type: "text", placeholder: "e.g. A-, B+" },
 ];
 
 export default function AdminAssignmentsPage() {

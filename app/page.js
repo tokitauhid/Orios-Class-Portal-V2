@@ -9,6 +9,8 @@ import {
   mockStats,
   mockCountdowns,
   mockWeeklyRoutine,
+  mockAssignments,
+  mockLabReports,
 } from "@/lib/mock-data";
 import { getSubject } from "@/lib/subjects";
 import { getTodayClasses } from "@/lib/schedule-helpers";
@@ -17,7 +19,9 @@ import {
   ClipboardList,
   Clock,
   Search,
+  AlertTriangle,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   const { subjectColorsEnabled } = useSubjectColors();
@@ -26,6 +30,15 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const now = new Date();
+  const overdueAssignments = mockAssignments.filter(
+    (a) => a.status === "pending" && a.dueDate && new Date(a.dueDate) < now
+  );
+  const overdueLabReports = mockLabReports.filter(
+    (r) => r.status === "pending" && r.dueDate && new Date(r.dueDate) < now
+  );
+  const totalOverdue = overdueAssignments.length + overdueLabReports.length;
 
   const todayDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -127,6 +140,55 @@ export default function HomePage() {
 
       {/* ========== MAIN CONTENT ========== */}
       <div className="max-w-7xl mx-auto px-5 md:px-6 space-y-8 md:space-y-10 pb-10">
+        {/* Overdue Alerts Banner */}
+        {totalOverdue > 0 && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/50 dark:border-rose-900/30 dark:bg-rose-950/10 p-3 sm:p-4 animate-fade-in-up">
+            <div className="flex items-start gap-0 sm:gap-3">
+              <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+                <AlertTriangle size={16} strokeWidth={2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-rose-800 dark:text-rose-400">
+                  Attention: Overdue Tasks ({totalOverdue})
+                </h3>
+                <p className="text-xs text-rose-600 dark:text-rose-500/80 mt-0.5">
+                  You have tasks that are past their due dates. Please submit them as soon as possible.
+                </p>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {overdueAssignments.map((item) => (
+                    <Link
+                      key={`assign-${item.id}`}
+                      href="/assignments"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs"
+                    >
+                      <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate mr-2 text-left flex-1 min-w-0">
+                        {item.title} (Assignment)
+                      </span>
+                      <span className="text-rose-600 dark:text-rose-400 shrink-0 font-medium font-mono">
+                        Overdue
+                      </span>
+                    </Link>
+                  ))}
+                  {overdueLabReports.map((item) => (
+                    <Link
+                      key={`lab-${item.id}`}
+                      href="/lab-reports"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs"
+                    >
+                      <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate mr-2 text-left flex-1 min-w-0">
+                        {item.title} (Lab L{item.labNumber})
+                      </span>
+                      <span className="text-rose-600 dark:text-rose-400 shrink-0 font-medium font-mono">
+                        Overdue
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ===== Stats Strip ===== */}
         <section className="animate-fade-in-up delay-4">
           <div className="grid grid-cols-3 gap-2 md:gap-3 md:grid-cols-3">
