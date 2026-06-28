@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npx @opennextjs/cloudflare@latest build --skipBuild",
     "deploy": "npx @opennextjs/cloudflare@latest deploy",
-    "preview": "npx @opennextjs/cloudflare@latest build && npx @opennextjs/cloudflare@latest preview",
+    "preview": "npx @opennextjs/cloudflare@latest build --skipBuild && npx @opennextjs/cloudflare@latest preview",
     "start": "next start",
     "lint": "eslint"
   },
