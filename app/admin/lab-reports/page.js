@@ -53,6 +53,7 @@ const fields = [
   { key: "labNumber", label: "Lab Number", type: "number", required: true, placeholder: "e.g. 4" },
   { key: "dueDate", label: "Due Date", type: "date", required: true },
   { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
+  { key: "file", label: "Attachment File (Optional)", type: "file" },
 ];
 
 export default function AdminLabReportsPage() {

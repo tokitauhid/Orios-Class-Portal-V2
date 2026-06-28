@@ -34,6 +34,7 @@ const fields = [
   { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
   { key: "type", label: "Type", type: "select", required: true, options: typeOptions },
   { key: "date", label: "Date", type: "date" },
+  { key: "file", label: "Attachment File (Optional)", type: "file" },
 ];
 
 export default function AdminNotesPage() {

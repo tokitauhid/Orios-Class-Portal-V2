@@ -14,6 +14,7 @@ import {
   X,
   LogOut,
   Palette,
+  Users,
 } from "lucide-react";
 import { useAdminAuth } from "@/lib/admin-auth";
 import { useRouter } from "next/navigation";
@@ -31,9 +32,14 @@ const navItems = [
 
 export default function AdminSidebar({ isOpen, onClose }) {
   const pathname = usePathname();
-  const { logout } = useAdminAuth();
+  const { logout, user } = useAdminAuth();
   const router = useRouter();
   const { subjectColorsEnabled, toggleSubjectColors } = useSubjectColors();
+
+  const displayItems = [...navItems];
+  if (user?.role === "super_admin") {
+    displayItems.push({ label: "Admins", href: "/admin/admins", icon: Users });
+  }
 
   // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
@@ -155,7 +161,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
         {/* Navigation */}
         <nav className="flex-1 py-3 px-2 space-y-0.5">
-          {navItems.map(renderNavItem)}
+          {displayItems.map(renderNavItem)}
         </nav>
 
         {/* Footer */}

@@ -3,9 +3,11 @@
 import { useTheme } from "@/components/ThemeProvider";
 import { Menu, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAdminAuth } from "@/lib/admin-auth";
 
 export default function AdminTopbar({ title, onMenuToggle }) {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAdminAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -28,11 +30,23 @@ export default function AdminTopbar({ title, onMenuToggle }) {
         </h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3.5">
+        {/* User Info */}
+        {user && (
+          <div className="flex items-center gap-2 border-r border-zinc-200 dark:border-zinc-800/60 pr-3.5 h-6">
+            <span className="hidden sm:inline text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              {user.email}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400">
+              {user.role === "super_admin" ? "Super" : "Admin"}
+            </span>
+          </div>
+        )}
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="md:hidden p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           aria-label="Toggle theme"
         >
           {mounted ? (

@@ -9,6 +9,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Paperclip,
 } from "lucide-react";
 
 const statusConfig = {
@@ -186,6 +187,12 @@ export default function AssignmentsPage() {
                       <span className={`font-medium ${subjectColors.muted}`}>{subjectCode}</span>
                       {" · "}{assignment.description}
                     </p>
+                    {assignment.file && (
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                        <Paperclip size={10} className="shrink-0" />
+                        <span className="truncate">{assignment.file}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Due date */}

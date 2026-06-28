@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   Search,
   StickyNote,
+  Paperclip,
 } from "lucide-react";
 
 const typeConfig = {
@@ -197,6 +198,12 @@ export default function NotesPage() {
                             <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-1">
                               {note.description}
                             </p>
+                            {note.file && (
+                              <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                                <Paperclip size={10} className="shrink-0" />
+                                <span className="truncate">{note.file}</span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Date */}

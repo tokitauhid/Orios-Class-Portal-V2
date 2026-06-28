@@ -51,6 +51,7 @@ const fields = [
   { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
   { key: "dueDate", label: "Due Date", type: "date", required: true },
   { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
+  { key: "file", label: "Attachment File (Optional)", type: "file" },
 ];
 
 export default function AdminAssignmentsPage() {

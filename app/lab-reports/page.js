@@ -7,6 +7,7 @@ import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   FlaskConical,
   CheckCircle2,
+  Paperclip,
 } from "lucide-react";
 
 const statusConfig = {
@@ -183,6 +184,12 @@ export default function LabReportsPage() {
                       <span className={`font-medium ${subjectColors.muted}`}>{subjectCode}</span>
                       {" · "}{report.description}
                     </p>
+                    {report.file && (
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                        <Paperclip size={10} className="shrink-0" />
+                        <span className="truncate">{report.file}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Due date */}

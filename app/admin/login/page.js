@@ -8,6 +8,7 @@ import { Shield, Eye, EyeOff, ArrowRight } from "lucide-react";
 export default function AdminLoginPage() {
   const { login } = useAdminAuth();
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -21,11 +22,11 @@ export default function AdminLoginPage() {
     // Small delay for UX feel
     await new Promise((r) => setTimeout(r, 300));
 
-    const success = login(password);
+    const success = login(email, password);
     if (success) {
       router.push("/admin");
     } else {
-      setError("Invalid password");
+      setError("Invalid email or password");
       setLoading(false);
     }
   }
@@ -49,6 +50,26 @@ export default function AdminLoginPage() {
         {/* Login Card */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 p-5 space-y-4">
+            {/* Email Field */}
+            <div>
+              <label
+                htmlFor="admin-email"
+                className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5"
+              >
+                Email Address
+              </label>
+              <input
+                id="admin-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@orios.edu"
+                autoFocus
+                required
+                className="w-full px-3 py-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all duration-150"
+              />
+            </div>
+
             {/* Password Field */}
             <div>
               <label
@@ -64,7 +85,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
-                  autoFocus
+                  required
                   className="w-full px-3 py-2.5 pr-10 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all duration-150"
                 />
                 <button
@@ -87,7 +108,7 @@ export default function AdminLoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !password}
+              disabled={loading || !email || !password}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm"
             >
               {loading ? (
