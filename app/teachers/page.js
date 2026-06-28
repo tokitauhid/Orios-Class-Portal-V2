@@ -37,7 +37,7 @@ export default function TeachersPage() {
       </div>
 
       {/* Teacher Cards */}
-      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-24 md:pb-10 mt-4 md:mt-6">
+      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-20 md:pb-10 mt-4 md:mt-6">
         <div className="space-y-3">
           {mockTeachers.map((teacher) => {
             // Get the first subject's color for the avatar

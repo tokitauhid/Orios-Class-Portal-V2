@@ -138,7 +138,7 @@ export default function NotesPage() {
       </div>
 
       {/* Notes List */}
-      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-24 md:pb-10">
+      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-20 md:pb-10">
         {Object.keys(groupedNotes).length === 0 ? (
           <div className="text-center py-16 text-zinc-400 dark:text-zinc-600">
             <Search size={32} className="mx-auto mb-3 opacity-40" />

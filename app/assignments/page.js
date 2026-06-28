@@ -142,7 +142,7 @@ export default function AssignmentsPage() {
       </div>
 
       {/* Assignments List */}
-      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-24 md:pb-10 mt-4 md:mt-6">
+      <div className="max-w-4xl mx-auto px-5 md:px-6 pb-20 md:pb-10 mt-4 md:mt-6">
         {sortedAssignments.length === 0 ? (
           <div className="text-center py-16 text-zinc-400 dark:text-zinc-600">
             <CheckCircle2 size={32} className="mx-auto mb-3 opacity-40" />

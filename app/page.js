@@ -67,12 +67,6 @@ export default function HomePage() {
         <div className="relative md:hidden px-5 pt-5 pb-4">
           <div className="flex items-center justify-between animate-fade-in-up">
             <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-500/20">
-                  <span className="w-1 h-1 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse" />
-                  Live
-                </span>
-              </div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Orios Class
               </h1>
@@ -139,7 +133,7 @@ export default function HomePage() {
       </header>
 
       {/* ========== MAIN CONTENT ========== */}
-      <div className="max-w-7xl mx-auto px-5 md:px-6 space-y-8 md:space-y-10 pb-10">
+      <div className="max-w-7xl mx-auto px-5 md:px-6 space-y-8 md:space-y-10 pb-20 md:pb-10">
         {/* Overdue Alerts Banner */}
         {totalOverdue > 0 && (
           <div className="rounded-2xl border border-rose-200 bg-rose-50/50 dark:border-rose-900/30 dark:bg-rose-950/10 p-3 sm:p-4 animate-fade-in-up">
@@ -292,7 +286,7 @@ export default function HomePage() {
         <footer className="border-t border-zinc-200 dark:border-zinc-800/40 pt-6 pb-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-zinc-400 dark:text-zinc-600">
-              Built with ♥
+              Built with ♥ and passion for Students
             </p>
           </div>
         </footer>

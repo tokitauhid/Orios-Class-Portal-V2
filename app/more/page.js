@@ -35,7 +35,7 @@ export default function MorePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-2xl mx-auto px-5 md:px-6 pt-6 md:pt-10 pb-24 md:pb-10">
+      <div className="max-w-2xl mx-auto px-5 md:px-6 pt-6 md:pt-10 pb-20 md:pb-10">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
