@@ -141,30 +141,6 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {statsConfig.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Link
-              key={stat.label}
-              href={stat.href}
-              className="group rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 p-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-150"
-            >
-              <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${stat.color} mb-3`}>
-                <Icon size={16} strokeWidth={1.8} />
-              </div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                {stat.count}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
-                {stat.label}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-
       {/* Quick Actions */}
       <div>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
@@ -189,6 +165,33 @@ export default function AdminDashboard() {
             );
           })}
         </div>
+      </div>
+
+      {/* Stat Cards */}
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+        Content Stats
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {statsConfig.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Link
+              key={stat.label}
+              href={stat.href}
+              className="group rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 p-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-150"
+            >
+              <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${stat.color} mb-3`}>
+                <Icon size={16} strokeWidth={1.8} />
+              </div>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                {stat.count}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
+                {stat.label}
+              </p>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Pending Items Summary */}

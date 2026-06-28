@@ -66,7 +66,7 @@ function AdminLayoutInner({ children }) {
           title={pageTitle}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
           {children}
         </main>
       </div>
