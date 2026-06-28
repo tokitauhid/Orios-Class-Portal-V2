@@ -352,3 +352,22 @@ CREATE POLICY "Allow authenticated admin delete access to class-materials"
   TO authenticated
   USING (bucket_id = 'class-materials' AND public.is_admin());
 
+
+-- ─── 11. EXAMS TABLE ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.exams (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  subject_id TEXT REFERENCES public.subjects(id) ON DELETE CASCADE NOT NULL,
+  exam_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  resource_type TEXT CHECK (resource_type IN ('note', 'assignment', 'lab_report', 'file', 'none')) DEFAULT 'none',
+  resource_id INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access for exams" ON public.exams FOR SELECT USING (true);
+CREATE POLICY "Allow admin write access for exams" ON public.exams FOR ALL TO authenticated USING (public.is_admin());
+
+

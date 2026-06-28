@@ -27,9 +27,10 @@ const typeBadgeStyles = {
   assignment: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400",
 };
 
-export default function CountdownCard({ title, date, type = "exam", subject }) {
+export default function CountdownCard({ title, date, type = "exam", subject, onClick }) {
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState(getTimeRemaining(date));
+  const isClickable = !!onClick;
 
   useEffect(() => {
     setMounted(true);
@@ -47,9 +48,11 @@ export default function CountdownCard({ title, date, type = "exam", subject }) {
 
   return (
     <div
+      onClick={onClick}
       className={`
         rounded-xl border p-3 md:p-4 transition-all duration-200 hover:scale-[1.01]
         ${typeStyles[type] || "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"}
+        ${isClickable ? "cursor-pointer active:scale-[0.99] hover:shadow-sm" : ""}
       `}
     >
       {/* Mobile: compact row with prominent date */}

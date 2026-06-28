@@ -15,6 +15,7 @@ import {
   LogOut,
   Palette,
   Users,
+  BookOpen,
 } from "lucide-react";
 import { useAdminAuth } from "@/lib/admin-auth";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,7 @@ const navItems = [
   { label: "Notes", href: "/admin/notes", icon: FileText },
   { label: "Assignments", href: "/admin/assignments", icon: ClipboardList },
   { label: "Lab Reports", href: "/admin/lab-reports", icon: FlaskConical },
+  { label: "Exams", href: "/admin/exams", icon: BookOpen },
   { label: "Teachers", href: "/admin/teachers", icon: GraduationCap },
   { label: "Files", href: "/admin/files", icon: FolderOpen },
   { label: "Routine", href: "/admin/routine", icon: CalendarDays },

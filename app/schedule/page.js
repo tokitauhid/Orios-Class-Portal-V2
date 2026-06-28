@@ -25,6 +25,7 @@ export default function SchedulePage() {
   const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
   const [assignments, setAssignments] = useState([]);
   const [labReports, setLabReports] = useState([]);
+  const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -35,20 +36,29 @@ export default function SchedulePage() {
   useEffect(() => {
     async function loadScheduleData() {
       try {
-        const [routRes, teachRes, assignRes, labRes] = await Promise.all([
+        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes] = await Promise.all([
           supabase.from("routine").select("*"),
           supabase.from("teachers").select("id, name"),
           supabase.from("assignments").select("*"),
           supabase.from("lab_reports").select("*"),
+          supabase.from("exams").select("*"),
+          supabase.from("notes").select("id, title, url"),
+          supabase.from("files").select("id, name, url"),
         ]);
 
         if (routRes.error) throw routRes.error;
         if (teachRes.error) throw teachRes.error;
         if (assignRes.error) throw assignRes.error;
         if (labRes.error) throw labRes.error;
+        if (examsRes.error) throw examsRes.error;
 
         const dbRoutine = routRes.data || [];
         const dbTeachers = teachRes.data || [];
+        const dbAssignments = assignRes.data || [];
+        const dbLabReports = labRes.data || [];
+        const dbExams = examsRes.data || [];
+        const dbNotes = notesRes.data || [];
+        const dbFiles = filesRes.data || [];
 
         // Map Routine Slots to Weekly Routine
         const schedule = {};
@@ -87,7 +97,7 @@ export default function SchedulePage() {
 
         // Map Lab Reports
         setLabReports(
-          (labRes.data || []).map((l) => ({
+          dbLabReports.map((l) => ({
             id: l.id,
             title: l.title,
             description: l.description,
@@ -98,6 +108,42 @@ export default function SchedulePage() {
             file: l.file_url,
           }))
         );
+
+        // Map Exams
+        const mappedExams = dbExams.map((e) => {
+          let fileUrl = "";
+          let resourceTitle = "";
+          if (e.resource_type === "note") {
+            const res = dbNotes.find((n) => n.id === e.resource_id);
+            fileUrl = res?.url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "assignment") {
+            const res = dbAssignments.find((a) => a.id === e.resource_id);
+            fileUrl = res?.file_url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "lab_report") {
+            const res = dbLabReports.find((l) => l.id === e.resource_id);
+            fileUrl = res?.file_url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "file") {
+            const res = dbFiles.find((f) => f.id === e.resource_id);
+            fileUrl = res?.url || "";
+            resourceTitle = res?.name || "";
+          }
+
+          return {
+            id: e.id,
+            title: e.title,
+            description: e.description,
+            subjectId: e.subject_id,
+            examDate: e.exam_date,
+            resourceType: e.resource_type,
+            resourceId: e.resource_id,
+            fileUrl,
+            resourceTitle: resourceTitle || e.title,
+          };
+        });
+        setExams(mappedExams);
       } catch (err) {
         console.error("Error loading schedule data:", err);
       } finally {
@@ -135,7 +181,11 @@ export default function SchedulePage() {
       d.setDate(d.getDate() + diff);
       d.setHours(0, 0, 0, 0);
 
-      const allItems = [...assignments, ...labReports];
+      const allItems = [
+        ...assignments,
+        ...labReports,
+        ...exams.map(e => ({ ...e, dueDate: e.examDate }))
+      ];
       const dueItems = getItemsDueOnDate(allItems, d);
       if (dueItems.length > 0) {
         dots[dayName] = dueItems.length;
@@ -143,7 +193,7 @@ export default function SchedulePage() {
     });
 
     return dots;
-  }, [assignments, labReports]);
+  }, [assignments, labReports, exams]);
 
   if (loading || subjectsLoading) {
     return (
@@ -240,6 +290,7 @@ export default function SchedulePage() {
             onDayChange={setActiveDay}
             assignments={assignments}
             labReports={labReports}
+            exams={exams}
           />
         ) : (
           <WeekGrid

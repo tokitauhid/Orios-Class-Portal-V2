@@ -7,6 +7,7 @@ import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
 import { createClient } from "@/lib/supabase/client";
 import { getTodayClasses } from "@/lib/schedule-helpers";
+import { triggerDownload } from "@/lib/download";
 import {
   BookOpen,
   ClipboardList,
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
   const [assignments, setAssignments] = useState([]);
   const [labReports, setLabReports] = useState([]);
+  const [exams, setExams] = useState([]);
   const [stats, setStats] = useState({ classesToday: 0, pendingTasks: 0, upcomingEvents: 0 });
 
   const supabase = createClient();
@@ -38,22 +40,29 @@ export default function HomePage() {
   useEffect(() => {
     async function loadHomeData() {
       try {
-        const [routRes, teachRes, assignRes, labRes] = await Promise.all([
+        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes] = await Promise.all([
           supabase.from("routine").select("*"),
           supabase.from("teachers").select("id, name"),
           supabase.from("assignments").select("*"),
           supabase.from("lab_reports").select("*"),
+          supabase.from("exams").select("*"),
+          supabase.from("notes").select("id, title, url"),
+          supabase.from("files").select("id, name, url"),
         ]);
 
         if (routRes.error) throw routRes.error;
         if (teachRes.error) throw teachRes.error;
         if (assignRes.error) throw assignRes.error;
         if (labRes.error) throw labRes.error;
+        if (examsRes.error) throw examsRes.error;
 
         const dbRoutine = routRes.data || [];
         const dbTeachers = teachRes.data || [];
         const dbAssignments = assignRes.data || [];
         const dbLabReports = labRes.data || [];
+        const dbExams = examsRes.data || [];
+        const dbNotes = notesRes.data || [];
+        const dbFiles = filesRes.data || [];
 
         // 1. Build Routine Structure
         const schedule = {};
@@ -104,7 +113,42 @@ export default function HomePage() {
         }));
         setLabReports(mappedLabReports);
 
-        // 4. Calculate Stats
+        // 4. Map Exams
+        const mappedExams = dbExams.map((e) => {
+          let fileUrl = "";
+          let resourceTitle = "";
+          if (e.resource_type === "note") {
+            const res = dbNotes.find((n) => n.id === e.resource_id);
+            fileUrl = res?.url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "assignment") {
+            const res = dbAssignments.find((a) => a.id === e.resource_id);
+            fileUrl = res?.file_url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "lab_report") {
+            const res = dbLabReports.find((l) => l.id === e.resource_id);
+            fileUrl = res?.file_url || "";
+            resourceTitle = res?.title || "";
+          } else if (e.resource_type === "file") {
+            const res = dbFiles.find((f) => f.id === e.resource_id);
+            fileUrl = res?.url || "";
+            resourceTitle = res?.name || "";
+          }
+
+          return {
+            id: e.id,
+            title: e.title,
+            description: e.description,
+            subjectId: e.subject_id,
+            date: e.exam_date,
+            type: "exam",
+            fileUrl,
+            resourceTitle: resourceTitle || e.title,
+          };
+        });
+        setExams(mappedExams);
+
+        // 5. Calculate Stats
         const now = new Date();
         const classesTodayCount = getTodayClasses(mappedRoutine).length;
         
@@ -116,7 +160,8 @@ export default function HomePage() {
         const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         const upcomingCount = 
           mappedAssignments.filter(a => a.status === "pending" && new Date(a.dueDate) >= now && new Date(a.dueDate) <= oneWeekLater).length +
-          mappedLabReports.filter(l => l.status === "pending" && new Date(l.dueDate) >= now && new Date(l.dueDate) <= oneWeekLater).length;
+          mappedLabReports.filter(l => l.status === "pending" && new Date(l.dueDate) >= now && new Date(l.dueDate) <= oneWeekLater).length +
+          mappedExams.filter(e => new Date(e.date) >= now && new Date(e.date) <= oneWeekLater).length;
 
         setStats({
           classesToday: classesTodayCount,
@@ -158,18 +203,21 @@ export default function HomePage() {
   // Calculate top 3 upcoming deadlines (countdowns)
   const upcomingCountdowns = useMemo(() => {
     const allPending = [
-      ...assignments.filter((a) => a.status === "pending" && new Date(a.dueDate) >= now),
-      ...labReports.filter((l) => l.status === "pending" && new Date(l.dueDate) >= now),
-    ].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      ...assignments.filter((a) => a.status === "pending" && new Date(a.dueDate) >= now).map(a => ({ ...a, date: a.dueDate, itemType: "assignment" })),
+      ...labReports.filter((l) => l.status === "pending" && new Date(l.dueDate) >= now).map(l => ({ ...l, date: l.dueDate, itemType: "lab" })),
+      ...exams.filter((e) => new Date(e.date) >= now).map(e => ({ ...e, itemType: "exam" })),
+    ].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return allPending.slice(0, 3).map((item) => ({
-      id: `${item.type}-${item.id}`,
+      id: `${item.itemType}-${item.id}`,
       title: item.title,
-      type: item.type === "Assignment" ? "assignment" : "lab",
-      date: item.dueDate,
+      type: item.itemType,
+      date: item.date,
       subjectId: item.subjectId,
+      fileUrl: item.fileUrl || item.file || null,
+      resourceTitle: item.resourceTitle || item.title,
     }));
-  }, [assignments, labReports, now]);
+  }, [assignments, labReports, exams, now]);
 
   const todayClasses = useMemo(() => {
     if (loading) return [];
@@ -376,6 +424,7 @@ export default function HomePage() {
             ) : (
               upcomingCountdowns.map((item) => {
                 const subject = getSubject(item.subjectId);
+                const hasFile = !!item.fileUrl;
                 return (
                   <CountdownCard
                     key={item.id}
@@ -383,6 +432,7 @@ export default function HomePage() {
                     date={item.date}
                     type={item.type}
                     subject={subject ? subject.code : item.subjectId}
+                    onClick={hasFile ? () => triggerDownload(item.fileUrl, item.resourceTitle) : undefined}
                   />
                 );
               })
