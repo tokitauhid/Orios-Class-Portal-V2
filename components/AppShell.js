@@ -11,7 +11,7 @@ export default function AppShell({ children }) {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
-      {!isAdmin && <TopNav />}
+      <TopNav />
       <main className={isAdmin ? "" : "pb-20 md:pb-0"}>
         {children}
       </main>
