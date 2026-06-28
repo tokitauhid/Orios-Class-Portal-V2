@@ -1,0 +1,22 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/admins/page": "app/admin/admins/page.js",
+  "/admin/assignments/page": "app/admin/assignments/page.js",
+  "/admin/files/page": "app/admin/files/page.js",
+  "/admin/lab-reports/page": "app/admin/lab-reports/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/admin/notes/page": "app/admin/notes/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/routine/page": "app/admin/routine/page.js",
+  "/admin/teachers/page": "app/admin/teachers/page.js",
+  "/api/admin/accounts/route": "app-edge-has-no-entrypoint",
+  "/assignments/page": "app/assignments/page.js",
+  "/files/page": "app/files/page.js",
+  "/lab-reports/page": "app/lab-reports/page.js",
+  "/more/page": "app/more/page.js",
+  "/notes/page": "app/notes/page.js",
+  "/page": "app/page.js",
+  "/schedule/page": "app/schedule/page.js",
+  "/teachers/page": "app/teachers/page.js"
+}

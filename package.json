@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npx @opennextjs/cloudflare@latest build",
+    "build": "next build",
     "deploy": "npx @opennextjs/cloudflare@latest deploy",
     "preview": "npx @opennextjs/cloudflare@latest build && npx @opennextjs/cloudflare@latest preview",
     "start": "next start",
@@ -20,6 +20,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
     "@tailwindcss/postcss": "^4",
     "dotenv": "^17.4.2",
     "eslint": "^9",

@@ -1,0 +1,22 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/admins/page": "/admin/admins",
+  "/admin/assignments/page": "/admin/assignments",
+  "/admin/files/page": "/admin/files",
+  "/admin/lab-reports/page": "/admin/lab-reports",
+  "/admin/login/page": "/admin/login",
+  "/admin/notes/page": "/admin/notes",
+  "/admin/page": "/admin",
+  "/admin/routine/page": "/admin/routine",
+  "/admin/teachers/page": "/admin/teachers",
+  "/api/admin/accounts/route": "/api/admin/accounts",
+  "/assignments/page": "/assignments",
+  "/files/page": "/files",
+  "/lab-reports/page": "/lab-reports",
+  "/more/page": "/more",
+  "/notes/page": "/notes",
+  "/page": "/",
+  "/schedule/page": "/schedule",
+  "/teachers/page": "/teachers"
+}
