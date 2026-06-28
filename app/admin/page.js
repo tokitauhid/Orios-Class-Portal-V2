@@ -1,15 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  mockNotes,
-  mockAssignments,
-  mockLabReports,
-  mockTeachers,
-  mockFiles,
-  mockWeeklyRoutine,
-} from "@/lib/mock-data";
-import { subjects } from "@/lib/subjects";
+import { createClient } from "@/lib/supabase/client";
+import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   FileText,
   ClipboardList,
@@ -19,17 +13,7 @@ import {
   CalendarDays,
   BookOpen,
   Plus,
-  ArrowRight,
 } from "lucide-react";
-
-const stats = [
-  { label: "Notes", count: mockNotes.length, icon: FileText, href: "/admin/notes", color: "text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10" },
-  { label: "Assignments", count: mockAssignments.length, icon: ClipboardList, href: "/admin/assignments", color: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10" },
-  { label: "Lab Reports", count: mockLabReports.length, icon: FlaskConical, href: "/admin/lab-reports", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10" },
-  { label: "Teachers", count: mockTeachers.length, icon: GraduationCap, href: "/admin/teachers", color: "text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/10" },
-  { label: "Files", count: mockFiles.length, icon: FolderOpen, href: "/admin/files", color: "text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-500/10" },
-  { label: "Subjects", count: subjects.length, icon: BookOpen, href: "/admin/routine", color: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10" },
-];
 
 const quickActions = [
   { label: "Add Note", href: "/admin/notes", icon: FileText },
@@ -39,29 +23,111 @@ const quickActions = [
 ];
 
 export default function AdminDashboard() {
-  const now = new Date();
+  const { subjects, isLoading: subjectsLoading } = useSubjectColors();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    notes: 0,
+    assignments: 0,
+    labReports: 0,
+    teachers: 0,
+    files: 0,
+  });
+  const [pendingItems, setPendingItems] = useState([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const [notesRes, assignRes, labRes, teachRes, filesRes] = await Promise.all([
+          supabase.from("notes").select("id", { count: "exact", head: true }),
+          supabase.from("assignments").select("*"),
+          supabase.from("lab_reports").select("*"),
+          supabase.from("teachers").select("id", { count: "exact", head: true }),
+          supabase.from("files").select("id", { count: "exact", head: true }),
+        ]);
+
+        const totalNotes = notesRes.count || 0;
+        const dbAssignments = assignRes.data || [];
+        const dbLabReports = labRes.data || [];
+        const totalTeachers = teachRes.count || 0;
+        const totalFiles = filesRes.count || 0;
+
+        setStats({
+          notes: totalNotes,
+          assignments: dbAssignments.length,
+          labReports: dbLabReports.length,
+          teachers: totalTeachers,
+          files: totalFiles,
+        });
+
+        // Calculate Pending Items
+        const now = new Date();
+        const pendingAssignments = dbAssignments
+          .filter((a) => a.status === "pending")
+          .map((a) => ({
+            id: a.id,
+            title: a.title,
+            dueDate: a.due_date,
+            status: a.status,
+            type: "Assignment",
+            href: "/admin/assignments",
+          }));
+
+        const pendingLabReports = dbLabReports
+          .filter((r) => r.status === "pending")
+          .map((r) => ({
+            id: r.id,
+            title: r.title,
+            dueDate: r.due_date,
+            status: r.status,
+            type: "Lab Report",
+            href: "/admin/lab-reports",
+            labNumber: r.lab_number,
+          }));
+
+        const getIsOverdue = (item) => {
+          return item.dueDate && new Date(item.dueDate) < now;
+        };
+
+        const combinedPending = [...pendingAssignments, ...pendingLabReports].sort((a, b) => {
+          const aOverdue = getIsOverdue(a);
+          const bOverdue = getIsOverdue(b);
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+
+        setPendingItems(combinedPending.slice(0, 5));
+      } catch (err) {
+        console.error("Error loading admin dashboard stats:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
+
+  const statsConfig = [
+    { label: "Notes", count: stats.notes, icon: FileText, href: "/admin/notes", color: "text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10" },
+    { label: "Assignments", count: stats.assignments, icon: ClipboardList, href: "/admin/assignments", color: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10" },
+    { label: "Lab Reports", count: stats.labReports, icon: FlaskConical, href: "/admin/lab-reports", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10" },
+    { label: "Teachers", count: stats.teachers, icon: GraduationCap, href: "/admin/teachers", color: "text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/10" },
+    { label: "Files", count: stats.files, icon: FolderOpen, href: "/admin/files", color: "text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-500/10" },
+    { label: "Subjects", count: subjects.length, icon: BookOpen, href: "/admin/routine", color: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10" },
+  ];
 
   const getIsOverdue = (item) => {
-    return item.dueDate && new Date(item.dueDate) < now;
+    return item.dueDate && new Date(item.dueDate) < new Date();
   };
 
-  const pendingAssignments = mockAssignments
-    .filter((a) => a.status === "pending")
-    .map((a) => ({ ...a, type: "Assignment" }));
-
-  const pendingLabReports = mockLabReports
-    .filter((r) => r.status === "pending")
-    .map((r) => ({ ...r, type: "Lab Report" }));
-
-  const combinedPending = [...pendingAssignments, ...pendingLabReports].sort((a, b) => {
-    const aOverdue = getIsOverdue(a);
-    const bOverdue = getIsOverdue(b);
-    if (aOverdue && !bOverdue) return -1;
-    if (!aOverdue && bOverdue) return 1;
-    return new Date(a.dueDate) - new Date(b.dueDate);
-  });
-
-  const displayedPending = combinedPending.slice(0, 5);
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
@@ -77,7 +143,7 @@ export default function AdminDashboard() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {stats.map((stat) => {
+        {statsConfig.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
@@ -131,17 +197,17 @@ export default function AdminDashboard() {
           Pending Items
         </h3>
         <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 divide-y divide-zinc-100 dark:divide-zinc-800/30">
-          {displayedPending.length === 0 ? (
+          {pendingItems.length === 0 ? (
             <div className="p-4 text-center text-xs text-zinc-400 dark:text-zinc-600">
               No pending or overdue items!
             </div>
           ) : (
-            displayedPending.map((item) => {
+            pendingItems.map((item) => {
               const isOverdue = getIsOverdue(item);
               return (
                 <Link
                   key={`${item.type}-${item.id}`}
-                  href={item.type === "Assignment" ? "/admin/assignments" : "/admin/lab-reports"}
+                  href={item.href}
                   className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors duration-150 cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">

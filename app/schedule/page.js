@@ -1,34 +1,118 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { mockWeeklyRoutine, mockAssignments, mockLabReports } from "@/lib/mock-data";
-import { getSubject } from "@/lib/subjects";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   getTodayName,
   getNextClass,
   getItemsDueOnDate,
-  formatTime,
 } from "@/lib/schedule-helpers";
 import DayView from "@/components/DayView";
 import WeekGrid from "@/components/WeekGrid";
 import { CalendarDays, Clock, LayoutGrid, List } from "lucide-react";
 
+// Standard timeslots and days for the schedule
+const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+
 export default function SchedulePage() {
   const [viewMode, setViewMode] = useState("day"); // "day" | "week"
   const [activeDay, setActiveDay] = useState(getTodayName());
   const [mounted, setMounted] = useState(false);
-  const { getColor } = useSubjectColors();
+  const { getColor, getSubject, isLoading: subjectsLoading } = useSubjectColors();
+
+  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [assignments, setAssignments] = useState([]);
+  const [labReports, setLabReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    async function loadScheduleData() {
+      try {
+        const [routRes, teachRes, assignRes, labRes] = await Promise.all([
+          supabase.from("routine").select("*"),
+          supabase.from("teachers").select("id, name"),
+          supabase.from("assignments").select("*"),
+          supabase.from("lab_reports").select("*"),
+        ]);
+
+        if (routRes.error) throw routRes.error;
+        if (teachRes.error) throw teachRes.error;
+        if (assignRes.error) throw assignRes.error;
+        if (labRes.error) throw labRes.error;
+
+        const dbRoutine = routRes.data || [];
+        const dbTeachers = teachRes.data || [];
+
+        // Map Routine Slots to Weekly Routine
+        const schedule = {};
+        days.forEach((d) => {
+          schedule[d] = Array(8).fill(null);
+        });
+
+        dbRoutine.forEach((row) => {
+          const day = row.day_name;
+          const index = row.time_slot_index;
+          if (schedule[day] && index >= 0 && index < 8) {
+            const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
+            schedule[day][index] = {
+              subjectId: row.subject_id,
+              teacher: teacherObj ? teacherObj.name : "",
+              room: row.room || "",
+              type: row.type || "lecture",
+            };
+          }
+        });
+
+        setWeeklyRoutine({ timeSlots, days, schedule });
+
+        // Map Assignments
+        setAssignments(
+          (assignRes.data || []).map((a) => ({
+            id: a.id,
+            title: a.title,
+            description: a.description,
+            subjectId: a.subject_id,
+            dueDate: a.due_date,
+            status: a.status,
+            file: a.file_url,
+          }))
+        );
+
+        // Map Lab Reports
+        setLabReports(
+          (labRes.data || []).map((l) => ({
+            id: l.id,
+            title: l.title,
+            description: l.description,
+            subjectId: l.subject_id,
+            labNumber: l.lab_number,
+            dueDate: l.due_date,
+            status: l.status,
+            file: l.file_url,
+          }))
+        );
+      } catch (err) {
+        console.error("Error loading schedule data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadScheduleData();
+  }, []);
+
   // "Next Up" card data
   const nextClass = useMemo(() => {
-    if (!mounted) return null;
-    return getNextClass(mockWeeklyRoutine);
-  }, [mounted]);
+    if (!mounted || loading) return null;
+    return getNextClass(weeklyRoutine);
+  }, [mounted, loading, weeklyRoutine]);
 
   // Calculate deadline dots for week grid (count of items due per day)
   const deadlineDots = useMemo(() => {
@@ -39,7 +123,7 @@ export default function SchedulePage() {
       Wednesday: 3, Thursday: 4, Friday: 5,
     };
 
-    mockWeeklyRoutine.days.forEach((dayName) => {
+    days.forEach((dayName) => {
       const targetJsDay = jsRoutineDayMap[dayName];
       if (targetJsDay === undefined) return;
 
@@ -51,7 +135,7 @@ export default function SchedulePage() {
       d.setDate(d.getDate() + diff);
       d.setHours(0, 0, 0, 0);
 
-      const allItems = [...mockAssignments, ...mockLabReports];
+      const allItems = [...assignments, ...labReports];
       const dueItems = getItemsDueOnDate(allItems, d);
       if (dueItems.length > 0) {
         dots[dayName] = dueItems.length;
@@ -59,7 +143,15 @@ export default function SchedulePage() {
     });
 
     return dots;
-  }, []);
+  }, [assignments, labReports]);
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -143,15 +235,15 @@ export default function SchedulePage() {
         {/* View Content */}
         {viewMode === "day" ? (
           <DayView
-            routine={mockWeeklyRoutine}
+            routine={weeklyRoutine}
             activeDay={activeDay}
             onDayChange={setActiveDay}
-            assignments={mockAssignments}
-            labReports={mockLabReports}
+            assignments={assignments}
+            labReports={labReports}
           />
         ) : (
           <WeekGrid
-            routine={mockWeeklyRoutine}
+            routine={weeklyRoutine}
             deadlineDots={deadlineDots}
           />
         )}

@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { subjects as initialSubjects, availableColors } from "@/lib/subjects";
-import { mockWeeklyRoutine } from "@/lib/mock-data";
+import { useState, useEffect, useMemo } from "react";
+import { useSubjectColors } from "@/lib/SubjectContext";
+import { availableColors } from "@/lib/subjects";
+import { createClient } from "@/lib/supabase/client";
 import RoutineEditor from "@/components/admin/RoutineEditor";
 import AdminDataTable from "@/components/admin/AdminDataTable";
 import AdminFormDrawer from "@/components/admin/AdminFormDrawer";
 import { CalendarDays, Save, RotateCcw, BookOpen, Plus } from "lucide-react";
+
+const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
 
 const colorOptions = availableColors.map((c) => ({
   value: c,
@@ -22,7 +26,7 @@ const columns = [
     label: "Color",
     render: (item) => (
       <div className="flex items-center gap-1.5">
-        <span className={`w-2.5 h-2.5 rounded-full bg-${item.color}-500`} />
+        <span className={`w-2.5 h-2.5 rounded-full bg-${item.color}-500`} style={{ backgroundColor: `var(--color-${item.color}-500)` }} />
         <span className="capitalize">{item.color}</span>
       </div>
     ),
@@ -40,51 +44,206 @@ const fields = [
 ];
 
 export default function AdminRoutinePage() {
-  // State for Subjects (Subject management on top)
-  const [subjectsData, setSubjectsData] = useState([...initialSubjects]);
+  const { subjects, isLoading: subjectsLoading } = useSubjectColors();
+  const supabase = createClient();
+
+  // State for Subjects (managed dynamically in DB)
+  const [subjectsData, setSubjectsData] = useState([]);
   const [subjectDrawerOpen, setSubjectDrawerOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
 
-  // State for Routine (Routine management below)
-  const [routine, setRoutine] = useState(JSON.parse(JSON.stringify(mockWeeklyRoutine)));
+  // State for Routine
+  const [routine, setRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
+  // Load routine and teachers data
+  const loadRoutineData = async () => {
+    try {
+      const [routRes, teachRes, subRes] = await Promise.all([
+        supabase.from("routine").select("*"),
+        supabase.from("teachers").select("id, name"),
+        supabase.from("subjects").select("*").order("code", { ascending: true }),
+      ]);
+
+      if (routRes.error) throw routRes.error;
+      if (teachRes.error) throw teachRes.error;
+      if (subRes.error) throw subRes.error;
+
+      const dbTeachers = teachRes.data || [];
+      setTeachers(dbTeachers);
+
+      // Load Subjects List
+      const mappedSubjects = (subRes.data || []).map((s) => ({
+        id: s.id,
+        code: s.code,
+        name: s.name,
+        shortName: s.short_name,
+        color: s.color,
+        creditHours: Number(s.credit_hours),
+      }));
+      setSubjectsData(mappedSubjects);
+
+      // Map routine
+      const schedule = {};
+      days.forEach((d) => {
+        schedule[d] = Array(8).fill(null);
+      });
+
+      (routRes.data || []).forEach((row) => {
+        const day = row.day_name;
+        const index = row.time_slot_index;
+        if (schedule[day] && index >= 0 && index < 8) {
+          const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
+          schedule[day][index] = {
+            subjectId: row.subject_id,
+            teacher: teacherObj ? teacherObj.name : "",
+            room: row.room || "",
+            type: row.type || "lecture",
+          };
+        }
+      });
+
+      setRoutine({ timeSlots, days, schedule });
+    } catch (err) {
+      console.error("Error loading routine page data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRoutineData();
+  }, []);
+
   // Subject Handlers
-  function handleEditSubject(item) {
+  async function handleAddSubject() {
+    setEditingSubject(null);
+    setSubjectDrawerOpen(true);
+  }
+
+  async function handleEditSubject(item) {
     setEditingSubject(item);
     setSubjectDrawerOpen(true);
   }
 
-  function handleAddSubject() {
-    setEditingSubject(null);
-    setSubjectDrawerOpen(true);
-  }
+  async function handleSubjectSubmit(formData) {
+    try {
+      if (editingSubject) {
+        // Update subject
+        const { error } = await supabase
+          .from("subjects")
+          .update({
+            code: formData.code,
+            name: formData.name,
+            short_name: formData.shortName,
+            color: formData.color,
+            credit_hours: Number(formData.creditHours),
+          })
+          .eq("id", editingSubject.id);
 
-  function handleSubjectSubmit(formData) {
-    if (editingSubject) {
-      setSubjectsData((prev) =>
-        prev.map((s) => (s.id === editingSubject.id ? { ...editingSubject, ...formData } : s))
-      );
-    } else {
-      setSubjectsData((prev) => [{ ...formData, id: Date.now() }, ...prev]);
+        if (error) throw error;
+      } else {
+        // Add new subject
+        const { error } = await supabase.from("subjects").insert([
+          {
+            id: formData.id,
+            code: formData.code,
+            name: formData.name,
+            short_name: formData.shortName,
+            color: formData.color,
+            credit_hours: Number(formData.creditHours),
+          },
+        ]);
+
+        if (error) throw error;
+      }
+      setSubjectDrawerOpen(false);
+      setEditingSubject(null);
+      loadRoutineData(); // reload
+    } catch (err) {
+      alert(err.message || "Failed to save subject");
     }
-    setSubjectDrawerOpen(false);
-    setEditingSubject(null);
   }
 
-  function handleSubjectDelete(item) {
-    setSubjectsData((prev) => prev.filter((s) => s.id !== item.id));
+  async function handleSubjectDelete(item) {
+    try {
+      const { error } = await supabase.from("subjects").delete().eq("id", item.id);
+      if (error) throw error;
+      loadRoutineData();
+    } catch (err) {
+      alert(err.message || "Failed to delete subject");
+    }
   }
+
+  // Helper to match teacher name to DB ID
+  const getTeacherIdByName = (name) => {
+    if (!name) return null;
+    const found = teachers.find(
+      (t) =>
+        t.name.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(t.name.toLowerCase())
+    );
+    return found ? found.id : null;
+  };
 
   // Routine Handlers
-  function handleSaveRoutine() {
-    // In production, this would POST to the backend
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSaveRoutine() {
+    try {
+      setLoading(true);
+
+      // 1. Delete all old routine slots
+      const { error: delErr } = await supabase
+        .from("routine")
+        .delete()
+        .neq("day_name", ""); // deletes all rows
+
+      if (delErr) throw delErr;
+
+      // 2. Prepare new slots
+      const slotsToInsert = [];
+      Object.keys(routine.schedule).forEach((dayName) => {
+        const slots = routine.schedule[dayName] || [];
+        slots.forEach((slot, index) => {
+          if (slot) {
+            slotsToInsert.push({
+              day_name: dayName,
+              time_slot_index: index,
+              subject_id: slot.subjectId,
+              teacher_id: getTeacherIdByName(slot.teacher),
+              room: slot.room || "",
+              type: slot.type || "lecture",
+            });
+          }
+        });
+      });
+
+      // 3. Insert new routine slots if any
+      if (slotsToInsert.length > 0) {
+        const { error: insErr } = await supabase.from("routine").insert(slotsToInsert);
+        if (insErr) throw insErr;
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      alert(err.message || "Failed to save schedule routine");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleResetRoutine() {
-    setRoutine(JSON.parse(JSON.stringify(mockWeeklyRoutine)));
+    loadRoutineData();
+  }
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (

@@ -170,13 +170,13 @@ export default function AdminFormDrawer({ isOpen, onClose, onSubmit, title, fiel
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleChange(field.key, file.name);
+                        if (file) handleChange(field.key, file);
                       }}
                     />
                   </label>
                   {formData[field.key] && (
                     <span className="text-xs text-zinc-500 dark:text-zinc-500 truncate max-w-[150px]">
-                      {formData[field.key]}
+                      {formData[field.key]?.name || formData[field.key]}
                     </span>
                   )}
                 </div>

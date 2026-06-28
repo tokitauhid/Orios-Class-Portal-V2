@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { subjects, getSubject, getSubjectColor } from "@/lib/subjects";
 import { useSubjectColors } from "@/lib/SubjectContext";
 import { formatTime } from "@/lib/schedule-helpers";
-import { X, Check, Trash2 } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 
 /**
  * RoutineEditor — Interactive weekly schedule grid editor.
  * Click a cell to assign/edit a subject. Click X to clear it.
  */
 export default function RoutineEditor({ routine, onChange }) {
-  const { getColor } = useSubjectColors();
+  const { getColor, subjects, getSubject } = useSubjectColors();
   const [activeCell, setActiveCell] = useState(null); // { day, slotIndex }
   const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
   const popoverRef = useRef(null);
@@ -139,6 +138,7 @@ export default function RoutineEditor({ routine, onChange }) {
                             <EditableCell
                               slot={slot}
                               getColor={getColor}
+                              getSubject={getSubject}
                               onFieldChange={(field, value) => updateCellField(dayName, slotIndex, field, value)}
                             />
                           ) : (
@@ -198,7 +198,7 @@ export default function RoutineEditor({ routine, onChange }) {
                 <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
                   {sub.code}
                 </span>
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-auto">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-505 ml-auto">
                   {sub.shortName}
                 </span>
               </button>
@@ -213,7 +213,7 @@ export default function RoutineEditor({ routine, onChange }) {
 /**
  * A single filled cell with inline-editable teacher, room, and type fields.
  */
-function EditableCell({ slot, getColor, onFieldChange }) {
+function EditableCell({ slot, getColor, getSubject, onFieldChange }) {
   const subject = getSubject(slot.subjectId);
   const colors = getColor(slot.subjectId);
   const subjectCode = subject ? subject.shortName || subject.code : slot.subjectId;

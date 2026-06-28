@@ -1,8 +1,8 @@
 "use client";
 
-import { mockTeachers } from "@/lib/mock-data";
-import { getSubject } from "@/lib/subjects";
+import { useState, useEffect } from "react";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   GraduationCap,
   Mail,
@@ -12,7 +12,48 @@ import {
 } from "lucide-react";
 
 export default function TeachersPage() {
-  const { getColor } = useSubjectColors();
+  const { getColor, getSubject, isLoading: subjectsLoading } = useSubjectColors();
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadTeachers() {
+      try {
+        const { data, error } = await supabase
+          .from("teachers")
+          .select("*, teacher_subjects(subject_id)");
+        if (error) throw error;
+
+        const mapped = (data || []).map((t) => ({
+          id: t.id,
+          name: t.name,
+          role: t.role,
+          email: t.email,
+          phone: t.phone,
+          room: t.room,
+          officeHours: t.office_hours,
+          initials: t.initials,
+          subjectIds: (t.teacher_subjects || []).map((ts) => ts.subject_id),
+        }));
+        setTeachers(mapped);
+      } catch (err) {
+        console.error("Error loading teachers:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTeachers();
+  }, []);
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -26,7 +67,7 @@ export default function TeachersPage() {
                 Teachers
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-500 mt-0.5">
-                {mockTeachers.length} teachers this semester
+                {teachers.length} teachers this semester
               </p>
             </div>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
@@ -39,7 +80,7 @@ export default function TeachersPage() {
       {/* Teacher Cards */}
       <div className="max-w-4xl mx-auto px-5 md:px-6 pb-20 md:pb-10 mt-4 md:mt-6">
         <div className="space-y-3">
-          {mockTeachers.map((teacher) => {
+          {teachers.map((teacher) => {
             // Get the first subject's color for the avatar
             const primarySubjectId = teacher.subjectIds[0];
             const primaryColors = getColor(primarySubjectId);

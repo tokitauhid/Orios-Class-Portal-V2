@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockLabReports } from "@/lib/mock-data";
-import { subjects, getSubject } from "@/lib/subjects";
+import { useState, useMemo, useEffect } from "react";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   FlaskConical,
   CheckCircle2,
@@ -33,7 +32,40 @@ const statusFilters = ["All", "Pending", "Overdue", "Submitted"];
 export default function LabReportsPage() {
   const [activeStatus, setActiveStatus] = useState("All");
   const [activeSubject, setActiveSubject] = useState("all");
-  const { getColor } = useSubjectColors();
+  const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
+  const [labReports, setLabReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadLabReports() {
+      try {
+        const { data, error } = await supabase
+          .from("lab_reports")
+          .select("*")
+          .order("due_date", { ascending: true });
+        if (error) throw error;
+        
+        const mapped = (data || []).map((l) => ({
+          id: l.id,
+          title: l.title,
+          description: l.description,
+          subjectId: l.subject_id,
+          labNumber: l.lab_number,
+          dueDate: l.due_date,
+          status: l.status,
+          file: l.file_url,
+        }));
+        setLabReports(mapped);
+      } catch (err) {
+        console.error("Error loading lab reports:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLabReports();
+  }, []);
 
   const getDynamicStatus = (item) => {
     if (item.status === "pending" && item.dueDate && new Date(item.dueDate) < new Date()) {
@@ -43,13 +75,13 @@ export default function LabReportsPage() {
   };
 
   const filtered = useMemo(() => {
-    return mockLabReports.filter((r) => {
+    return labReports.filter((r) => {
       const itemStatus = getDynamicStatus(r);
       const matchStatus = activeStatus === "All" || itemStatus === activeStatus.toLowerCase();
       const matchSubject = activeSubject === "all" || r.subjectId === activeSubject;
       return matchStatus && matchSubject;
     });
-  }, [activeStatus, activeSubject]);
+  }, [labReports, activeStatus, activeSubject]);
 
   // Sort: overdue first, then pending, then submitted
   const sorted = useMemo(() => {
@@ -62,8 +94,16 @@ export default function LabReportsPage() {
     });
   }, [filtered]);
 
-  const pendingCount = mockLabReports.filter((r) => getDynamicStatus(r) === "pending").length;
-  const overdueCount = mockLabReports.filter((r) => getDynamicStatus(r) === "overdue").length;
+  const pendingCount = labReports.filter((r) => getDynamicStatus(r) === "pending").length;
+  const overdueCount = labReports.filter((r) => getDynamicStatus(r) === "overdue").length;
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -77,7 +117,7 @@ export default function LabReportsPage() {
                 Lab Reports
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-500 mt-0.5">
-                {pendingCount} pending · {overdueCount} overdue · {mockLabReports.length} total
+                {pendingCount} pending · {overdueCount} overdue · {labReports.length} total
               </p>
             </div>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -160,10 +200,19 @@ export default function LabReportsPage() {
                 day: "numeric",
               });
 
+              const handleCardClick = () => {
+                if (report.file) {
+                  window.open(report.file, "_blank", "noopener,noreferrer");
+                }
+              };
+
               return (
                 <div
                   key={report.id}
-                  className="flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
+                  onClick={handleCardClick}
+                  className={`flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 ${
+                    report.file ? "cursor-pointer group" : ""
+                  }`}
                 >
                   {/* Lab number badge */}
                   <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 shrink-0 mt-0.5">
@@ -173,7 +222,7 @@ export default function LabReportsPage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${report.file ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
                         {report.title}
                       </h3>
                       <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${config.badge}`}>
@@ -187,7 +236,7 @@ export default function LabReportsPage() {
                     {report.file && (
                       <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
                         <Paperclip size={10} className="shrink-0" />
-                        <span className="truncate">{report.file}</span>
+                        <span className="truncate group-hover:underline">View Attachment</span>
                       </div>
                     )}
                   </div>

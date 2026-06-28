@@ -1,18 +1,11 @@
 "use client";
 
 import { useSubjectColors } from "@/lib/SubjectContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import StatCard from "@/components/StatCard";
 import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
-import {
-  mockStats,
-  mockCountdowns,
-  mockWeeklyRoutine,
-  mockAssignments,
-  mockLabReports,
-} from "@/lib/mock-data";
-import { getSubject } from "@/lib/subjects";
+import { createClient } from "@/lib/supabase/client";
 import { getTodayClasses } from "@/lib/schedule-helpers";
 import {
   BookOpen,
@@ -23,21 +16,137 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+
 export default function HomePage() {
-  const { subjectColorsEnabled } = useSubjectColors();
+  const { getColor, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [assignments, setAssignments] = useState([]);
+  const [labReports, setLabReports] = useState([]);
+  const [stats, setStats] = useState({ classesToday: 0, pendingTasks: 0, upcomingEvents: 0 });
+
+  const supabase = createClient();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    async function loadHomeData() {
+      try {
+        const [routRes, teachRes, assignRes, labRes] = await Promise.all([
+          supabase.from("routine").select("*"),
+          supabase.from("teachers").select("id, name"),
+          supabase.from("assignments").select("*"),
+          supabase.from("lab_reports").select("*"),
+        ]);
+
+        if (routRes.error) throw routRes.error;
+        if (teachRes.error) throw teachRes.error;
+        if (assignRes.error) throw assignRes.error;
+        if (labRes.error) throw labRes.error;
+
+        const dbRoutine = routRes.data || [];
+        const dbTeachers = teachRes.data || [];
+        const dbAssignments = assignRes.data || [];
+        const dbLabReports = labRes.data || [];
+
+        // 1. Build Routine Structure
+        const schedule = {};
+        days.forEach((d) => {
+          schedule[d] = Array(8).fill(null);
+        });
+
+        dbRoutine.forEach((row) => {
+          const day = row.day_name;
+          const index = row.time_slot_index;
+          if (schedule[day] && index >= 0 && index < 8) {
+            const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
+            schedule[day][index] = {
+              subjectId: row.subject_id,
+              teacher: teacherObj ? teacherObj.name : "",
+              room: row.room || "",
+              type: row.type || "lecture",
+            };
+          }
+        });
+        const mappedRoutine = { timeSlots, days, schedule };
+        setWeeklyRoutine(mappedRoutine);
+
+        // 2. Map Assignments
+        const mappedAssignments = dbAssignments.map((a) => ({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+          subjectId: a.subject_id,
+          dueDate: a.due_date,
+          status: a.status,
+          file: a.file_url,
+          type: "Assignment",
+        }));
+        setAssignments(mappedAssignments);
+
+        // 3. Map Lab Reports
+        const mappedLabReports = dbLabReports.map((l) => ({
+          id: l.id,
+          title: l.title,
+          description: l.description,
+          subjectId: l.subject_id,
+          labNumber: l.lab_number,
+          dueDate: l.due_date,
+          status: l.status,
+          file: l.file_url,
+          type: "Lab Report",
+        }));
+        setLabReports(mappedLabReports);
+
+        // 4. Calculate Stats
+        const now = new Date();
+        const classesTodayCount = getTodayClasses(mappedRoutine).length;
+        
+        const pendingCount = 
+          mappedAssignments.filter(a => a.status === "pending" && new Date(a.dueDate) >= now).length +
+          mappedLabReports.filter(l => l.status === "pending" && new Date(l.dueDate) >= now).length;
+
+        // Upcoming in next 7 days
+        const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcomingCount = 
+          mappedAssignments.filter(a => a.status === "pending" && new Date(a.dueDate) >= now && new Date(a.dueDate) <= oneWeekLater).length +
+          mappedLabReports.filter(l => l.status === "pending" && new Date(l.dueDate) >= now && new Date(l.dueDate) <= oneWeekLater).length;
+
+        setStats({
+          classesToday: classesTodayCount,
+          pendingTasks: pendingCount,
+          upcomingEvents: upcomingCount,
+        });
+
+      } catch (err) {
+        console.error("Error loading home dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadHomeData();
+  }, []);
+
   const now = new Date();
-  const overdueAssignments = mockAssignments.filter(
-    (a) => a.status === "pending" && a.dueDate && new Date(a.dueDate) < now
-  );
-  const overdueLabReports = mockLabReports.filter(
-    (r) => r.status === "pending" && r.dueDate && new Date(r.dueDate) < now
-  );
+  const overdueAssignments = useMemo(() => {
+    return assignments.filter(
+      (a) => a.status === "pending" && a.dueDate && new Date(a.dueDate) < now
+    );
+  }, [assignments, now]);
+
+  const overdueLabReports = useMemo(() => {
+    return labReports.filter(
+      (r) => r.status === "pending" && r.dueDate && new Date(r.dueDate) < now
+    );
+  }, [labReports, now]);
+
   const totalOverdue = overdueAssignments.length + overdueLabReports.length;
 
   const todayDate = new Date().toLocaleDateString("en-US", {
@@ -45,6 +154,35 @@ export default function HomePage() {
     month: "long",
     day: "numeric",
   });
+
+  // Calculate top 3 upcoming deadlines (countdowns)
+  const upcomingCountdowns = useMemo(() => {
+    const allPending = [
+      ...assignments.filter((a) => a.status === "pending" && new Date(a.dueDate) >= now),
+      ...labReports.filter((l) => l.status === "pending" && new Date(l.dueDate) >= now),
+    ].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    return allPending.slice(0, 3).map((item) => ({
+      id: `${item.type}-${item.id}`,
+      title: item.title,
+      type: item.type === "Assignment" ? "assignment" : "lab",
+      date: item.dueDate,
+      subjectId: item.subjectId,
+    }));
+  }, [assignments, labReports, now]);
+
+  const todayClasses = useMemo(() => {
+    if (loading) return [];
+    return getTodayClasses(weeklyRoutine);
+  }, [loading, weeklyRoutine]);
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -188,21 +326,21 @@ export default function HomePage() {
           <div className="grid grid-cols-3 gap-2 md:gap-3 md:grid-cols-3">
             <StatCard
               icon={BookOpen}
-              value={mockStats.classesToday}
+              value={stats.classesToday}
               label="Classes Today"
-              href="/calendar"
+              href="/schedule"
             />
             <StatCard
               icon={ClipboardList}
-              value={mockStats.pendingTasks}
+              value={stats.pendingTasks}
               label="Pending Tasks"
               href="/assignments"
             />
             <StatCard
               icon={Clock}
-              value={mockStats.upcomingEvents}
+              value={stats.upcomingEvents}
               label="Upcoming"
-              href="/calendar"
+              href="/schedule"
             />
           </div>
         </section>
@@ -226,18 +364,24 @@ export default function HomePage() {
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {mockCountdowns.map((item) => {
-              const subject = getSubject(item.subjectId);
-              return (
-                <CountdownCard
-                  key={item.id}
-                  title={item.title}
-                  date={item.date}
-                  type={item.type}
-                  subject={subject ? subject.code : item.subjectId}
-                />
-              );
-            })}
+            {upcomingCountdowns.length === 0 ? (
+              <div className="sm:col-span-2 lg:col-span-3 text-center py-8 text-zinc-400 dark:text-zinc-600 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/40 rounded-xl">
+                <p className="text-sm">No upcoming deadlines! Keep it up.</p>
+              </div>
+            ) : (
+              upcomingCountdowns.map((item) => {
+                const subject = getSubject(item.subjectId);
+                return (
+                  <CountdownCard
+                    key={item.id}
+                    title={item.title}
+                    date={item.date}
+                    type={item.type}
+                    subject={subject ? subject.code : item.subjectId}
+                  />
+                );
+              })
+            )}
           </div>
         </section>
 
@@ -253,34 +397,30 @@ export default function HomePage() {
           </div>
 
           <div className="rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/40 p-4 md:p-5">
-            {(() => {
-              const todayClasses = getTodayClasses(mockWeeklyRoutine);
-              return todayClasses.length > 0 ? (
-                <div>
-                  {todayClasses.map((cls, index) => {
-                    const subject = getSubject(cls.subjectId);
-                    return (
-                      <ScheduleCard
-                        key={`${cls.subjectId}-${index}`}
-                        time={cls.time}
-                        subject={subject ? subject.code : cls.subjectId}
-                        teacher={cls.teacher}
-                        room={cls.room}
-                        type={cls.type}
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-zinc-400 dark:text-zinc-600">
-                  <span className="text-2xl mb-2 block">🎉</span>
-                  <p className="text-sm">No classes today! Enjoy your day off.</p>
-                </div>
-              );
-            })()}
+            {todayClasses.length > 0 ? (
+              <div>
+                {todayClasses.map((cls, index) => {
+                  const subject = getSubject(cls.subjectId);
+                  return (
+                    <ScheduleCard
+                      key={`${cls.subjectId}-${index}`}
+                      time={cls.time}
+                      subject={subject ? subject.code : cls.subjectId}
+                      teacher={cls.teacher}
+                      room={cls.room}
+                      type={cls.type}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-zinc-400 dark:text-zinc-600">
+                <span className="text-2xl mb-2 block">🎉</span>
+                <p className="text-sm">No classes today! Enjoy your day off.</p>
+              </div>
+            )}
           </div>
         </section>
-
 
         {/* ===== Footer ===== */}
         <footer className="border-t border-zinc-200 dark:border-zinc-800/40 pt-6 pb-4">

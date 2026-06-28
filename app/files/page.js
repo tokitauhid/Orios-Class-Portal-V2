@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockFiles } from "@/lib/mock-data";
-import { subjects, getSubject } from "@/lib/subjects";
+import { useState, useMemo, useEffect } from "react";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   FolderOpen,
   FileText,
@@ -13,6 +12,7 @@ import {
   Search,
   Download,
   User,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const fileTypeConfig = {
@@ -20,15 +20,49 @@ const fileTypeConfig = {
   zip: { label: "ZIP", icon: Archive, color: "text-amber-500 dark:text-amber-400" },
   pptx: { label: "PPTX", icon: Presentation, color: "text-orange-500 dark:text-orange-400" },
   code: { label: "Code", icon: Code2, color: "text-emerald-500 dark:text-emerald-400" },
+  image: { label: "Image", icon: ImageIcon, color: "text-blue-500 dark:text-blue-400" },
 };
 
 export default function FilesPage() {
   const [search, setSearch] = useState("");
   const [activeSubject, setActiveSubject] = useState("all");
-  const { getColor } = useSubjectColors();
+  const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadFiles() {
+      try {
+        const { data, error } = await supabase
+          .from("files")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        
+        const mapped = (data || []).map((f) => ({
+          id: f.id,
+          name: f.name,
+          subjectId: f.subject_id,
+          type: f.type,
+          size: f.size,
+          uploadedBy: f.uploaded_by,
+          url: f.url,
+          date: f.created_at,
+        }));
+        setFiles(mapped);
+      } catch (err) {
+        console.error("Error loading files:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFiles();
+  }, []);
 
   const filteredFiles = useMemo(() => {
-    return mockFiles.filter((file) => {
+    return files.filter((file) => {
       const matchSubject = activeSubject === "all" || file.subjectId === activeSubject;
       const subject = getSubject(file.subjectId);
       const subjectCode = subject ? subject.code : "";
@@ -39,7 +73,21 @@ export default function FilesPage() {
         file.uploadedBy.toLowerCase().includes(search.toLowerCase());
       return matchSubject && matchSearch;
     });
-  }, [search, activeSubject]);
+  }, [files, search, activeSubject, getSubject]);
+
+  const handleDownload = (fileUrl) => {
+    if (fileUrl) {
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -128,6 +176,7 @@ export default function FilesPage() {
               return (
                 <div
                   key={file.id}
+                  onClick={() => handleDownload(file.url)}
                   className="flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
                 >
                   {/* File icon */}
@@ -137,7 +186,7 @@ export default function FilesPage() {
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {file.name}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">

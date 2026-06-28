@@ -22,11 +22,11 @@ export default function AdminLoginPage() {
     // Small delay for UX feel
     await new Promise((r) => setTimeout(r, 300));
 
-    const success = login(email, password);
-    if (success) {
+    const res = await login(email, password);
+    if (res.success) {
       router.push("/admin");
     } else {
-      setError("Invalid email or password");
+      setError(res.error || "Invalid email or password");
       setLoading(false);
     }
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAdminsDb, saveAdminsDb, useAdminAuth } from "@/lib/admin-auth";
+import { useAdminAuth } from "@/lib/admin-auth";
 import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { ShieldAlert, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -39,11 +39,26 @@ const fields = [
 export default function AdminManagementPage() {
   const { user, isLoading } = useAdminAuth();
   const [data, setData] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
+  const fetchAdmins = async () => {
+    try {
+      const res = await fetch("/api/admin/accounts");
+      const list = await res.json();
+      if (!res.ok) throw new Error(list.error || "Failed to load admin accounts");
+      setData(list);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message);
+    }
+  };
+
   useEffect(() => {
-    setData(getAdminsDb());
-  }, []);
+    if (user && user.role === "super_admin") {
+      fetchAdmins();
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -66,41 +81,75 @@ export default function AdminManagementPage() {
     );
   }
 
-  const handleAdd = (item) => {
-    const updated = [item, ...data];
-    setData(updated);
-    saveAdminsDb(updated);
+  const handleAdd = async (item) => {
+    try {
+      const res = await fetch("/api/admin/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || "Failed to add admin account");
+      setData((prev) => [resData, ...prev]);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-  const handleUpdate = (item) => {
-    const updated = data.map((a) => (a.id === item.id ? item : a));
-    setData(updated);
-    saveAdminsDb(updated);
+  const handleUpdate = async (item) => {
+    try {
+      const res = await fetch("/api/admin/accounts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, role: item.role }),
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || "Failed to update admin account");
+      setData((prev) => prev.map((a) => (a.id === item.id ? resData : a)));
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-  const handleDelete = (item) => {
+  const handleDelete = async (item) => {
     // Prevent self-deletion
     if (item.email.toLowerCase() === user.email.toLowerCase()) {
       alert("You cannot delete your own admin account while logged in.");
       return;
     }
-    const updated = data.filter((a) => a.id !== item.id);
-    setData(updated);
-    saveAdminsDb(updated);
+    try {
+      const res = await fetch(`/api/admin/accounts?id=${item.id}`, {
+        method: "DELETE",
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || "Failed to delete admin account");
+      setData((prev) => prev.filter((a) => a.id !== item.id));
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
-    <AdminCrudPage
-      title="Admin Account"
-      icon={Users}
-      iconColor="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-      columns={columns}
-      fields={fields}
-      data={data}
-      searchKeys={["email"]}
-      onAdd={handleAdd}
-      onUpdate={handleUpdate}
-      onDelete={handleDelete}
-    />
+    <div>
+      {errorMsg && (
+        <div className="max-w-6xl mx-auto mt-4 px-4">
+          <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
+            {errorMsg}
+          </div>
+        </div>
+      )}
+      <AdminCrudPage
+        title="Admin Account"
+        icon={Users}
+        iconColor="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+        columns={columns}
+        fields={fields}
+        data={data}
+        searchKeys={["email"]}
+        onAdd={handleAdd}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+      />
+    </div>
   );
 }

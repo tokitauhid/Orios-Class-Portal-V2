@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockAssignments } from "@/lib/mock-data";
-import { subjects, getSubject } from "@/lib/subjects";
+import { useState, useMemo, useEffect } from "react";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   ClipboardList,
   Clock,
@@ -38,7 +37,39 @@ const statusFilters = ["All", "Pending", "Overdue", "Submitted"];
 export default function AssignmentsPage() {
   const [activeStatus, setActiveStatus] = useState("All");
   const [activeSubject, setActiveSubject] = useState("all");
-  const { getColor } = useSubjectColors();
+  const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadAssignments() {
+      try {
+        const { data, error } = await supabase
+          .from("assignments")
+          .select("*")
+          .order("due_date", { ascending: true });
+        if (error) throw error;
+        
+        const mapped = (data || []).map((a) => ({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+          subjectId: a.subject_id,
+          dueDate: a.due_date,
+          status: a.status,
+          file: a.file_url,
+        }));
+        setAssignments(mapped);
+      } catch (err) {
+        console.error("Error loading assignments:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAssignments();
+  }, []);
 
   const getDynamicStatus = (item) => {
     if (item.status === "pending" && item.dueDate && new Date(item.dueDate) < new Date()) {
@@ -48,13 +79,13 @@ export default function AssignmentsPage() {
   };
 
   const filteredAssignments = useMemo(() => {
-    return mockAssignments.filter((a) => {
+    return assignments.filter((a) => {
       const itemStatus = getDynamicStatus(a);
       const matchStatus = activeStatus === "All" || itemStatus === activeStatus.toLowerCase();
       const matchSubject = activeSubject === "all" || a.subjectId === activeSubject;
       return matchStatus && matchSubject;
     });
-  }, [activeStatus, activeSubject]);
+  }, [assignments, activeStatus, activeSubject]);
 
   // Sort: overdue first, then pending, then submitted
   const sortedAssignments = useMemo(() => {
@@ -67,8 +98,16 @@ export default function AssignmentsPage() {
     });
   }, [filteredAssignments]);
 
-  const pendingCount = mockAssignments.filter((a) => getDynamicStatus(a) === "pending").length;
-  const overdueCount = mockAssignments.filter((a) => getDynamicStatus(a) === "overdue").length;
+  const pendingCount = assignments.filter((a) => getDynamicStatus(a) === "pending").length;
+  const overdueCount = assignments.filter((a) => getDynamicStatus(a) === "overdue").length;
+
+  if (loading || subjectsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -82,7 +121,7 @@ export default function AssignmentsPage() {
                 Assignments
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-500 mt-0.5">
-                {pendingCount} pending · {overdueCount} overdue · {mockAssignments.length} total
+                {pendingCount} pending · {overdueCount} overdue · {assignments.length} total
               </p>
             </div>
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -165,10 +204,20 @@ export default function AssignmentsPage() {
                 day: "numeric",
               });
 
+              // Allow clicking to download/view the file if it exists
+              const handleCardClick = () => {
+                if (assignment.file) {
+                  window.open(assignment.file, "_blank", "noopener,noreferrer");
+                }
+              };
+
               return (
                 <div
                   key={assignment.id}
-                  className="flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
+                  onClick={handleCardClick}
+                  className={`flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 ${
+                    assignment.file ? "cursor-pointer group" : ""
+                  }`}
                 >
                   {/* Status indicator */}
                   <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${config.dot}`} />
@@ -176,7 +225,7 @@ export default function AssignmentsPage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${assignment.file ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
                         {assignment.title}
                       </h3>
                       <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${config.badge}`}>
@@ -190,7 +239,7 @@ export default function AssignmentsPage() {
                     {assignment.file && (
                       <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
                         <Paperclip size={10} className="shrink-0" />
-                        <span className="truncate">{assignment.file}</span>
+                        <span className="truncate group-hover:underline">View Attachment</span>
                       </div>
                     )}
                   </div>
