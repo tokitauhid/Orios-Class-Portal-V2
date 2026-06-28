@@ -132,16 +132,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 1. Profiles Policies
-CREATE POLICY "Public profiles are readable by authenticated users" 
-  ON public.profiles FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Admins can modify profiles" 
-  ON public.profiles FOR ALL TO authenticated USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'super_admin'
-    )
-  );
+CREATE POLICY "Public profiles are readable by everyone" 
+  ON public.profiles FOR SELECT USING (true);
 
 -- 2. Subjects Policies
 CREATE POLICY "Allow public read access for subjects" ON public.subjects FOR SELECT USING (true);
