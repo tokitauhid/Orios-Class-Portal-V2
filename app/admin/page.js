@@ -28,7 +28,7 @@ const stats = [
   { label: "Lab Reports", count: mockLabReports.length, icon: FlaskConical, href: "/admin/lab-reports", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10" },
   { label: "Teachers", count: mockTeachers.length, icon: GraduationCap, href: "/admin/teachers", color: "text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/10" },
   { label: "Files", count: mockFiles.length, icon: FolderOpen, href: "/admin/files", color: "text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-500/10" },
-  { label: "Subjects", count: subjects.length, icon: BookOpen, href: "/admin/subjects", color: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10" },
+  { label: "Subjects", count: subjects.length, icon: BookOpen, href: "/admin/routine", color: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10" },
 ];
 
 const quickActions = [

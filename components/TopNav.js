@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const navLinks = [
@@ -64,18 +64,31 @@ export default function TopNav() {
           })}
         </div>
 
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
-          aria-label="Toggle theme"
-        >
-          {mounted ? (
-            theme === "dark" ? <Sun size={18} /> : <Moon size={18} />
-          ) : (
-            <div className="w-[18px] h-[18px]" />
-          )}
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
+            aria-label="Toggle theme"
+          >
+            {mounted ? (
+              theme === "dark" ? <Sun size={18} /> : <Moon size={18} />
+            ) : (
+              <div className="w-[18px] h-[18px]" />
+            )}
+          </button>
+
+          {/* Admin Panel */}
+          <Link
+            href="/admin"
+            className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
+            aria-label="Admin Panel"
+            title="Admin Panel"
+          >
+            <Shield size={18} />
+          </Link>
+        </div>
       </div>
     </nav>
   );

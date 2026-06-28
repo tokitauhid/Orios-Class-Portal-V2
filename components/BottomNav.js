@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
-import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   Home,
   FileText,
@@ -19,7 +18,6 @@ import {
   Sun,
   Moon,
   Info,
-  Palette,
   Shield,
 } from "lucide-react";
 
@@ -41,7 +39,6 @@ const moreMenuItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const { subjectColorsEnabled, toggleSubjectColors } = useSubjectColors();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -152,31 +149,27 @@ export default function BottomNav() {
                 </span>
               </button>
 
-              {/* Subject Colors Toggle */}
-              <button
-                onClick={toggleSubjectColors}
-                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150 group"
+              {/* Admin Panel */}
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150 group"
               >
                 <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
-                  <Palette size={18} strokeWidth={1.8} />
+                  <Shield size={18} strokeWidth={1.8} />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 block">
-                    Subject Colors
+                    Admin Panel
                   </span>
                   <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
-                    {subjectColorsEnabled ? "On" : "Off"}
+                    Manage portal content
                   </span>
                 </div>
-                {/* Toggle switch */}
-                <div className={`w-8 h-[18px] rounded-full flex items-center px-0.5 transition-colors duration-200 ${
-                  subjectColorsEnabled ? "bg-indigo-500" : "bg-zinc-300 dark:bg-zinc-700"
-                }`}>
-                  <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                    subjectColorsEnabled ? "translate-x-[14px]" : "translate-x-0"
-                  }`} />
-                </div>
-              </button>
+                <svg className="w-4 h-4 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
 
               {/* About */}
               <div className="flex items-center gap-3 px-3 py-3">
@@ -192,28 +185,6 @@ export default function BottomNav() {
                   </span>
                 </div>
               </div>
-
-              {/* Admin Panel */}
-              <Link
-                href="/admin"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150 group"
-              >
-                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
-                  <Shield size={18} strokeWidth={1.8} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 block">
-                    Admin Panel
-                  </span>
-                  <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
-                    Manage portal content
-                  </span>
-                </div>
-                <svg className="w-4 h-4 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
             </div>
           </div>
         </div>

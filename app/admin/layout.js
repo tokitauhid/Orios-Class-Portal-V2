@@ -15,7 +15,6 @@ const pageTitles = {
   "/admin/teachers": "Teachers",
   "/admin/files": "Files",
   "/admin/routine": "Routine",
-  "/admin/subjects": "Subjects",
 };
 
 function AdminLayoutInner({ children }) {

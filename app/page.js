@@ -1,6 +1,7 @@
 "use client";
 
-import { useTheme } from "@/components/ThemeProvider";
+import { useSubjectColors } from "@/lib/SubjectContext";
+import { useState, useEffect } from "react";
 import StatCard from "@/components/StatCard";
 import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
@@ -15,15 +16,11 @@ import {
   BookOpen,
   ClipboardList,
   Clock,
-  Sun,
-  Moon,
   Search,
 } from "lucide-react";
 
-import { useState, useEffect } from "react";
-
 export default function HomePage() {
-  const { theme, toggleTheme } = useTheme();
+  const { subjectColorsEnabled } = useSubjectColors();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -235,18 +232,6 @@ export default function HomePage() {
             <p className="text-xs text-zinc-400 dark:text-zinc-600">
               Built with ♥
             </p>
-            {/* Mobile theme toggle (since it's not in bottom nav) */}
-            <button
-              onClick={toggleTheme}
-              className="md:hidden p-2 rounded-lg text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150"
-              aria-label="Toggle theme"
-            >
-              {mounted ? (
-                theme === "dark" ? <Sun size={16} /> : <Moon size={16} />
-              ) : (
-                <div className="w-[16px] h-[16px]" />
-              )}
-            </button>
           </div>
         </footer>
       </div>
