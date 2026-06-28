@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useSubjectColors } from "@/lib/SubjectContext";
+import { triggerDownload } from "@/lib/download";
 import {
   Search,
   X,
@@ -162,7 +163,10 @@ export default function SearchOverlay() {
         category: "Notes",
         icon: FileText,
         action: () => {
-          if (n.url) window.open(n.url, "_blank");
+          if (n.url) {
+            if (n.type === "link") window.open(n.url, "_blank");
+            else triggerDownload(n.url, n.title);
+          }
           else router.push("/notes");
         },
       }));
@@ -213,7 +217,7 @@ export default function SearchOverlay() {
         category: "Files",
         icon: FolderOpen,
         action: () => {
-          if (f.url) window.open(f.url, "_blank");
+          if (f.url) triggerDownload(f.url, f.name);
           else router.push("/files");
         },
       }));

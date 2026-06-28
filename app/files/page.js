@@ -15,6 +15,8 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
+import { triggerDownload } from "@/lib/download";
+
 const fileTypeConfig = {
   pdf: { label: "PDF", icon: FileText, color: "text-red-500 dark:text-red-400" },
   zip: { label: "ZIP", icon: Archive, color: "text-amber-500 dark:text-amber-400" },
@@ -75,10 +77,8 @@ export default function FilesPage() {
     });
   }, [files, search, activeSubject, getSubject]);
 
-  const handleDownload = (fileUrl) => {
-    if (fileUrl) {
-      window.open(fileUrl, "_blank", "noopener,noreferrer");
-    }
+  const handleDownload = (fileUrl, fileName) => {
+    triggerDownload(fileUrl, fileName);
   };
 
   if (loading || subjectsLoading) {
@@ -176,7 +176,7 @@ export default function FilesPage() {
               return (
                 <div
                   key={file.id}
-                  onClick={() => handleDownload(file.url)}
+                  onClick={() => handleDownload(file.url, file.name)}
                   className="flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
                 >
                   {/* File icon */}

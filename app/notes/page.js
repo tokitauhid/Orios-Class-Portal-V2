@@ -12,6 +12,7 @@ import {
   StickyNote,
   Paperclip,
 } from "lucide-react";
+import { triggerDownload } from "@/lib/download";
 
 const typeConfig = {
   pdf: {
@@ -221,7 +222,11 @@ export default function NotesPage() {
 
                       const handleCardClick = () => {
                         if (note.url) {
-                          window.open(note.url, "_blank", "noopener,noreferrer");
+                          if (note.type === "link") {
+                            window.open(note.url, "_blank", "noopener,noreferrer");
+                          } else {
+                            triggerDownload(note.url, note.title);
+                          }
                         }
                       };
 

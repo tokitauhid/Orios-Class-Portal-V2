@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Paperclip,
 } from "lucide-react";
+import { triggerDownload } from "@/lib/download";
 
 const statusConfig = {
   pending: {
@@ -207,7 +208,7 @@ export default function AssignmentsPage() {
               // Allow clicking to download/view the file if it exists
               const handleCardClick = () => {
                 if (assignment.file) {
-                  window.open(assignment.file, "_blank", "noopener,noreferrer");
+                  triggerDownload(assignment.file, assignment.title);
                 }
               };
 

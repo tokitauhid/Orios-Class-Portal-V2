@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Paperclip,
 } from "lucide-react";
+import { triggerDownload } from "@/lib/download";
 
 const statusConfig = {
   pending: {
@@ -202,7 +203,7 @@ export default function LabReportsPage() {
 
               const handleCardClick = () => {
                 if (report.file) {
-                  window.open(report.file, "_blank", "noopener,noreferrer");
+                  triggerDownload(report.file, report.title);
                 }
               };
 

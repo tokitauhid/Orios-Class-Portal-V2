@@ -2,7 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const runtime = "edge";
+// Pre-flight check: ensure the service role key is actually configured
+function checkServiceKey() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key || key === "placeholder") {
+    return NextResponse.json(
+      { error: "Server configuration error: SUPABASE_SERVICE_ROLE_KEY is not set. Please add it as a secret in your Cloudflare dashboard." },
+      { status: 503 }
+    );
+  }
+  return null;
+}
 
 // Helper function to verify super_admin role
 async function checkSuperAdmin() {
@@ -28,24 +38,34 @@ async function checkSuperAdmin() {
 
 // GET /api/admin/accounts - Get list of administrator profiles
 export async function GET() {
+  const serviceKeyCheck = checkServiceKey();
+  if (serviceKeyCheck) return serviceKeyCheck;
+
   const authCheck = await checkSuperAdmin();
   if (!authCheck.authorized) return authCheck.errorResponse;
 
-  const adminClient = createAdminClient();
-  const { data: profiles, error } = await adminClient
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const adminClient = createAdminClient();
+    const { data: profiles, error } = await adminClient
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(profiles);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-
-  return NextResponse.json(profiles);
 }
 
 // POST /api/admin/accounts - Create a new admin account
 export async function POST(request) {
+  const serviceKeyCheck = checkServiceKey();
+  if (serviceKeyCheck) return serviceKeyCheck;
+
   const authCheck = await checkSuperAdmin();
   if (!authCheck.authorized) return authCheck.errorResponse;
 
@@ -95,6 +115,9 @@ export async function POST(request) {
 
 // PUT /api/admin/accounts - Update account role
 export async function PUT(request) {
+  const serviceKeyCheck = checkServiceKey();
+  if (serviceKeyCheck) return serviceKeyCheck;
+
   const authCheck = await checkSuperAdmin();
   if (!authCheck.authorized) return authCheck.errorResponse;
 
@@ -137,6 +160,9 @@ export async function PUT(request) {
 
 // DELETE /api/admin/accounts - Delete an admin account
 export async function DELETE(request) {
+  const serviceKeyCheck = checkServiceKey();
+  if (serviceKeyCheck) return serviceKeyCheck;
+
   const authCheck = await checkSuperAdmin();
   if (!authCheck.authorized) return authCheck.errorResponse;
 

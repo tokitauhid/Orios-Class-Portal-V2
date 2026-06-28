@@ -42,11 +42,23 @@ export default function AdminManagementPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
+  const getErrorText = async (res) => {
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const json = await res.json();
+      return json.error || json.message || "An error occurred";
+    }
+    return await res.text() || `Request failed with status ${res.status}`;
+  };
+
   const fetchAdmins = async () => {
     try {
       const res = await fetch("/api/admin/accounts");
+      if (!res.ok) {
+        const errorText = await getErrorText(res);
+        throw new Error(errorText);
+      }
       const list = await res.json();
-      if (!res.ok) throw new Error(list.error || "Failed to load admin accounts");
       setData(list);
     } catch (err) {
       console.error(err);
@@ -63,7 +75,7 @@ export default function AdminManagementPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+         <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -88,8 +100,11 @@ export default function AdminManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
       });
+      if (!res.ok) {
+        const errorText = await getErrorText(res);
+        throw new Error(errorText);
+      }
       const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "Failed to add admin account");
       setData((prev) => [resData, ...prev]);
     } catch (err) {
       alert(err.message);
@@ -103,8 +118,11 @@ export default function AdminManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: item.id, role: item.role }),
       });
+      if (!res.ok) {
+        const errorText = await getErrorText(res);
+        throw new Error(errorText);
+      }
       const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "Failed to update admin account");
       setData((prev) => prev.map((a) => (a.id === item.id ? resData : a)));
     } catch (err) {
       alert(err.message);
@@ -121,8 +139,10 @@ export default function AdminManagementPage() {
       const res = await fetch(`/api/admin/accounts?id=${item.id}`, {
         method: "DELETE",
       });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "Failed to delete admin account");
+      if (!res.ok) {
+        const errorText = await getErrorText(res);
+        throw new Error(errorText);
+      }
       setData((prev) => prev.filter((a) => a.id !== item.id));
     } catch (err) {
       alert(err.message);
