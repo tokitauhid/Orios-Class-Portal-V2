@@ -2,6 +2,7 @@
 
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
+import SearchOverlay from "@/components/SearchOverlay";
 
 export default function AppShell({ children }) {
   return (
@@ -11,6 +12,7 @@ export default function AppShell({ children }) {
         {children}
       </main>
       <BottomNav />
+      <SearchOverlay />
     </div>
   );
 }

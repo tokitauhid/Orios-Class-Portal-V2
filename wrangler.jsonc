@@ -5,6 +5,7 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "keep_names": false,
   "observability": {
     "enabled": true
   },

@@ -259,7 +259,12 @@ export default function HomePage() {
 
           {/* Search bar (desktop only) */}
           <div className="animate-fade-in-up delay-3">
-            <button className="flex items-center gap-3 w-full max-w-md px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 text-zinc-400 dark:text-zinc-600 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-200 text-sm">
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("open-search"));
+              }}
+              className="flex items-center gap-3 w-full max-w-md px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 text-zinc-400 dark:text-zinc-600 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-200 text-sm"
+            >
               <Search size={16} strokeWidth={2} />
               <span className="flex-1 text-left">Search everything...</span>
               <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-400 dark:text-zinc-600 font-mono border border-zinc-200 dark:border-zinc-700">
