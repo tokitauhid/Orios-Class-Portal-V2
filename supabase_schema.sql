@@ -320,3 +320,35 @@ INSERT INTO public.routine (day_name, time_slot_index, subject_id, teacher_id, r
 ON CONFLICT (day_name, time_slot_index) DO UPDATE SET
   subject_id = EXCLUDED.subject_id, teacher_id = EXCLUDED.teacher_id,
   room = EXCLUDED.room, type = EXCLUDED.type;
+
+
+-- ─── 10. STORAGE BUCKET AND POLICIES ─────────────────────────────────────────
+
+-- Create the class-materials bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('class-materials', 'class-materials', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow public read access to class-materials objects
+CREATE POLICY "Allow public read access to class-materials"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'class-materials');
+
+-- Allow authenticated admin upload access to class-materials objects
+CREATE POLICY "Allow authenticated admin upload access to class-materials"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'class-materials' AND public.is_admin());
+
+-- Allow authenticated admin update access to class-materials objects
+CREATE POLICY "Allow authenticated admin update access to class-materials"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'class-materials' AND public.is_admin());
+
+-- Allow authenticated admin delete access to class-materials objects
+CREATE POLICY "Allow authenticated admin delete access to class-materials"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'class-materials' AND public.is_admin());
+

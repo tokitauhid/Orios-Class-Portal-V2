@@ -7,6 +7,53 @@ import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { FileText } from "lucide-react";
 import { uploadFile } from "@/lib/download";
 
+const extMap = {
+  pdf: "pdf",
+  doc: "doc",
+  docx: "doc",
+  xls: "doc",
+  xlsx: "doc",
+  txt: "doc",
+  pptx: "pptx",
+  ppt: "pptx",
+  zip: "zip",
+  rar: "zip",
+  tar: "zip",
+  "7z": "zip",
+  c: "code",
+  cpp: "code",
+  java: "code",
+  js: "code",
+  ts: "code",
+  py: "code",
+  png: "image",
+  jpg: "image",
+  jpeg: "image",
+  webp: "image",
+};
+
+function getFileType(fileObj, urlStr, isNote = false) {
+  let ext = "";
+  if (fileObj && typeof fileObj !== "string") {
+    ext = fileObj.name.split(".").pop();
+  } else if (urlStr) {
+    try {
+      const urlPath = new URL(urlStr).pathname;
+      ext = urlPath.split(".").pop();
+    } catch {
+      const cleanPath = urlStr.split("?")[0];
+      ext = cleanPath.split(".").pop();
+    }
+  }
+  
+  if (!ext) return isNote ? "link" : "pdf";
+  
+  const mapped = extMap[ext.toLowerCase()];
+  if (mapped) return mapped;
+  
+  return isNote ? "link" : "pdf";
+}
+
 export default function AdminNotesPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [data, setData] = useState([]);
@@ -47,14 +94,6 @@ export default function AdminNotesPage() {
     return subjects.map((s) => ({ value: s.id, label: s.code }));
   }, [subjects]);
 
-  const typeOptions = [
-    { value: "pdf", label: "PDF" },
-    { value: "doc", label: "Document" },
-    { value: "pptx", label: "PowerPoint" },
-    { value: "link", label: "Link" },
-    { value: "image", label: "Image" },
-  ];
-
   const columns = useMemo(() => [
     { key: "title", label: "Title" },
     {
@@ -73,7 +112,6 @@ export default function AdminNotesPage() {
     { key: "title", label: "Title", type: "text", required: true, placeholder: "Note title" },
     { key: "description", label: "Description", type: "textarea", placeholder: "Brief description" },
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
-    { key: "type", label: "Type", type: "select", required: true, options: typeOptions },
     { key: "fileUpload", label: "Upload File Attachment", type: "file" },
     { key: "url", label: "Or URL / Resource Link", type: "text", placeholder: "https://example.com/file.pdf" },
   ], [subjectOptions]);
@@ -81,6 +119,7 @@ export default function AdminNotesPage() {
   const handleAdd = async (formData) => {
     try {
       let finalUrl = formData.url || "";
+
       if (formData.fileUpload && typeof formData.fileUpload !== "string") {
         finalUrl = await uploadFile(formData.fileUpload, supabase);
       }
@@ -90,13 +129,15 @@ export default function AdminNotesPage() {
         return;
       }
 
+      const noteType = getFileType(formData.fileUpload, finalUrl, true);
+
       const { data: inserted, error } = await supabase
         .from("notes")
         .insert([{
           title: formData.title,
           description: formData.description || "",
           subject_id: formData.subjectId,
-          type: formData.type,
+          type: noteType,
           url: finalUrl,
         }])
         .select()
@@ -124,6 +165,7 @@ export default function AdminNotesPage() {
   const handleUpdate = async (formData) => {
     try {
       let finalUrl = formData.url || "";
+
       if (formData.fileUpload && typeof formData.fileUpload !== "string") {
         finalUrl = await uploadFile(formData.fileUpload, supabase);
       }
@@ -133,13 +175,15 @@ export default function AdminNotesPage() {
         return;
       }
 
+      const noteType = getFileType(formData.fileUpload, finalUrl, true);
+
       const { data: updated, error } = await supabase
         .from("notes")
         .update({
           title: formData.title,
           description: formData.description || "",
           subject_id: formData.subjectId,
-          type: formData.type,
+          type: noteType,
           url: finalUrl,
         })
         .eq("id", formData.id)

@@ -65,9 +65,8 @@ export default function BottomNav() {
     <>
       {/* Bottom Sheet Overlay */}
       <div
-        className={`fixed inset-0 z-40 md:hidden transition-opacity duration-300 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-40 md:hidden transition-opacity duration-300 bg-black/50 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           }`}
-        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         onClick={() => setMenuOpen(false)}
       />
 
@@ -75,7 +74,6 @@ export default function BottomNav() {
       <div
         className={`fixed left-0 right-0 bottom-0 z-45 md:hidden transition-transform duration-300 ease-out ${menuOpen ? "translate-y-0" : "translate-y-full"
           }`}
-        style={{ zIndex: 45 }}
       >
         <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg backdrop-saturate-150 rounded-t-2xl border-t border-zinc-200/50 dark:border-zinc-700/30 pb-20 max-h-[70vh] overflow-y-auto">
           {/* Handle */}

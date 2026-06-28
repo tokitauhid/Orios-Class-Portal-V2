@@ -7,6 +7,53 @@ import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { FolderOpen } from "lucide-react";
 import { uploadFile } from "@/lib/download";
 
+const extMap = {
+  pdf: "pdf",
+  doc: "doc",
+  docx: "doc",
+  xls: "doc",
+  xlsx: "doc",
+  txt: "doc",
+  pptx: "pptx",
+  ppt: "pptx",
+  zip: "zip",
+  rar: "zip",
+  tar: "zip",
+  "7z": "zip",
+  c: "code",
+  cpp: "code",
+  java: "code",
+  js: "code",
+  ts: "code",
+  py: "code",
+  png: "image",
+  jpg: "image",
+  jpeg: "image",
+  webp: "image",
+};
+
+function getFileType(fileObj, urlStr, isNote = false) {
+  let ext = "";
+  if (fileObj && typeof fileObj !== "string") {
+    ext = fileObj.name.split(".").pop();
+  } else if (urlStr) {
+    try {
+      const urlPath = new URL(urlStr).pathname;
+      ext = urlPath.split(".").pop();
+    } catch {
+      const cleanPath = urlStr.split("?")[0];
+      ext = cleanPath.split(".").pop();
+    }
+  }
+  
+  if (!ext) return isNote ? "link" : "pdf";
+  
+  const mapped = extMap[ext.toLowerCase()];
+  if (mapped) return mapped;
+  
+  return isNote ? "link" : "pdf";
+}
+
 export default function AdminFilesPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [data, setData] = useState([]);
@@ -48,15 +95,6 @@ export default function AdminFilesPage() {
     return subjects.map((s) => ({ value: s.id, label: s.code }));
   }, [subjects]);
 
-  const typeOptions = [
-    { value: "pdf", label: "PDF" },
-    { value: "doc", label: "Document" },
-    { value: "pptx", label: "PowerPoint" },
-    { value: "zip", label: "ZIP Archive" },
-    { value: "code", label: "Code File" },
-    { value: "image", label: "Image" },
-  ];
-
   const columns = useMemo(() => [
     { key: "name", label: "File Name" },
     {
@@ -79,7 +117,6 @@ export default function AdminFilesPage() {
   const fields = useMemo(() => [
     { key: "name", label: "File Display Name", type: "text", required: true, placeholder: "e.g. Midterm Syllabus" },
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
-    { key: "type", label: "File Type (Optional)", type: "select", options: typeOptions, placeholder: "Auto-detected if blank" },
     { key: "size", label: "Size (Optional)", type: "text", placeholder: "Auto-calculated if blank" },
     { key: "uploadedBy", label: "Uploaded By", type: "text", required: true, placeholder: "Name or email" },
     { key: "fileUpload", label: "Upload File Attachment", type: "file" },
@@ -90,11 +127,9 @@ export default function AdminFilesPage() {
     try {
       let finalFileUrl = formData.url || "";
       let fileSize = formData.size || "—";
-      let fileType = formData.type || "pdf";
 
       if (formData.fileUpload && typeof formData.fileUpload !== "string") {
         const fileObj = formData.fileUpload;
-        const fileExt = fileObj.name.split(".").pop();
         
         finalFileUrl = await uploadFile(fileObj, supabase);
 
@@ -107,41 +142,14 @@ export default function AdminFilesPage() {
             fileSize = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
           }
         }
-        
-        // Auto detect file type if blank
-        if (!formData.type) {
-          const extMap = {
-            pdf: "pdf",
-            doc: "doc",
-            docx: "doc",
-            xls: "doc",
-            xlsx: "doc",
-            txt: "doc",
-            pptx: "pptx",
-            ppt: "pptx",
-            zip: "zip",
-            rar: "zip",
-            tar: "zip",
-            "7z": "zip",
-            c: "code",
-            cpp: "code",
-            java: "code",
-            js: "code",
-            ts: "code",
-            py: "code",
-            png: "image",
-            jpg: "image",
-            jpeg: "image",
-            webp: "image",
-          };
-          fileType = extMap[fileExt.toLowerCase()] || "pdf";
-        }
       }
 
       if (!finalFileUrl) {
         alert("Please upload a file or enter an attachment URL.");
         return;
       }
+
+      const fileType = getFileType(formData.fileUpload, finalFileUrl, false);
 
       const { data: inserted, error } = await supabase
         .from("files")
@@ -180,11 +188,9 @@ export default function AdminFilesPage() {
     try {
       let finalFileUrl = formData.url;
       let fileSize = formData.size || "—";
-      let fileType = formData.type || "pdf";
 
       if (formData.fileUpload && typeof formData.fileUpload !== "string") {
         const fileObj = formData.fileUpload;
-        const fileExt = fileObj.name.split(".").pop();
         
         finalFileUrl = await uploadFile(fileObj, supabase);
 
@@ -195,41 +201,14 @@ export default function AdminFilesPage() {
         } else {
           fileSize = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
         }
-        
-        // Auto type
-        if (!formData.type) {
-          const extMap = {
-            pdf: "pdf",
-            doc: "doc",
-            docx: "doc",
-            xls: "doc",
-            xlsx: "doc",
-            txt: "doc",
-            pptx: "pptx",
-            ppt: "pptx",
-            zip: "zip",
-            rar: "zip",
-            tar: "zip",
-            "7z": "zip",
-            c: "code",
-            cpp: "code",
-            java: "code",
-            js: "code",
-            ts: "code",
-            py: "code",
-            png: "image",
-            jpg: "image",
-            jpeg: "image",
-            webp: "image",
-          };
-          fileType = extMap[fileExt.toLowerCase()] || "pdf";
-        }
       }
 
       if (!finalFileUrl) {
         alert("Please upload a file or enter an attachment URL.");
         return;
       }
+
+      const fileType = getFileType(formData.fileUpload, finalFileUrl, false);
 
       const { data: updated, error } = await supabase
         .from("files")
