@@ -5,6 +5,7 @@ import { useSubjectColors } from "@/lib/SubjectContext";
 import { createClient } from "@/lib/supabase/client";
 import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { ClipboardList } from "lucide-react";
+import { uploadFile } from "@/lib/download";
 
 export default function AdminAssignmentsPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
@@ -90,11 +91,17 @@ export default function AdminAssignmentsPage() {
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
     { key: "dueDate", label: "Due Date", type: "date", required: true },
     { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
-    { key: "file", label: "Attachment URL (Optional)", type: "text", placeholder: "https://example.com/sheet.pdf" },
+    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
+    { key: "file", label: "Or Attachment URL", type: "text", placeholder: "https://example.com/sheet.pdf" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
+      let finalFileUrl = formData.file || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
       const { data: inserted, error } = await supabase
         .from("assignments")
         .insert([{
@@ -103,7 +110,7 @@ export default function AdminAssignmentsPage() {
           subject_id: formData.subjectId,
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
-          file_url: formData.file || "",
+          file_url: finalFileUrl,
         }])
         .select()
         .single();
@@ -129,6 +136,11 @@ export default function AdminAssignmentsPage() {
 
   const handleUpdate = async (formData) => {
     try {
+      let finalFileUrl = formData.file || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
       const { data: updated, error } = await supabase
         .from("assignments")
         .update({
@@ -137,7 +149,7 @@ export default function AdminAssignmentsPage() {
           subject_id: formData.subjectId,
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
-          file_url: formData.file || "",
+          file_url: finalFileUrl,
         })
         .eq("id", formData.id)
         .select()

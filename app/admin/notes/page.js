@@ -5,6 +5,7 @@ import { useSubjectColors } from "@/lib/SubjectContext";
 import { createClient } from "@/lib/supabase/client";
 import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { FileText } from "lucide-react";
+import { uploadFile } from "@/lib/download";
 
 export default function AdminNotesPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
@@ -73,11 +74,22 @@ export default function AdminNotesPage() {
     { key: "description", label: "Description", type: "textarea", placeholder: "Brief description" },
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
     { key: "type", label: "Type", type: "select", required: true, options: typeOptions },
-    { key: "url", label: "URL / Resource Link", type: "text", required: true, placeholder: "https://example.com/file.pdf" },
+    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
+    { key: "url", label: "Or URL / Resource Link", type: "text", placeholder: "https://example.com/file.pdf" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
+      let finalUrl = formData.url || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
+      if (!finalUrl) {
+        alert("Please upload a file or enter an external URL.");
+        return;
+      }
+
       const { data: inserted, error } = await supabase
         .from("notes")
         .insert([{
@@ -85,7 +97,7 @@ export default function AdminNotesPage() {
           description: formData.description || "",
           subject_id: formData.subjectId,
           type: formData.type,
-          url: formData.url,
+          url: finalUrl,
         }])
         .select()
         .single();
@@ -111,6 +123,16 @@ export default function AdminNotesPage() {
 
   const handleUpdate = async (formData) => {
     try {
+      let finalUrl = formData.url || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
+      if (!finalUrl) {
+        alert("Please upload a file or enter an external URL.");
+        return;
+      }
+
       const { data: updated, error } = await supabase
         .from("notes")
         .update({
@@ -118,7 +140,7 @@ export default function AdminNotesPage() {
           description: formData.description || "",
           subject_id: formData.subjectId,
           type: formData.type,
-          url: formData.url,
+          url: finalUrl,
         })
         .eq("id", formData.id)
         .select()

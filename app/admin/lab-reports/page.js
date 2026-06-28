@@ -5,6 +5,7 @@ import { useSubjectColors } from "@/lib/SubjectContext";
 import { createClient } from "@/lib/supabase/client";
 import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { FlaskConical } from "lucide-react";
+import { uploadFile } from "@/lib/download";
 
 export default function AdminLabReportsPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
@@ -93,11 +94,17 @@ export default function AdminLabReportsPage() {
     { key: "labNumber", label: "Lab Number", type: "number", required: true, placeholder: "e.g. 4" },
     { key: "dueDate", label: "Due Date", type: "date", required: true },
     { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
-    { key: "file", label: "Attachment URL (Optional)", type: "text", placeholder: "https://example.com/lab.pdf" },
+    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
+    { key: "file", label: "Or Attachment URL", type: "text", placeholder: "https://example.com/lab.pdf" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
+      let finalFileUrl = formData.file || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
       const { data: inserted, error } = await supabase
         .from("lab_reports")
         .insert([{
@@ -107,7 +114,7 @@ export default function AdminLabReportsPage() {
           lab_number: Number(formData.labNumber),
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
-          file_url: formData.file || "",
+          file_url: finalFileUrl,
         }])
         .select()
         .single();
@@ -134,6 +141,11 @@ export default function AdminLabReportsPage() {
 
   const handleUpdate = async (formData) => {
     try {
+      let finalFileUrl = formData.file || "";
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      }
+
       const { data: updated, error } = await supabase
         .from("lab_reports")
         .update({
@@ -143,7 +155,7 @@ export default function AdminLabReportsPage() {
           lab_number: Number(formData.labNumber),
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
-          file_url: formData.file || "",
+          file_url: finalFileUrl,
         })
         .eq("id", formData.id)
         .select()

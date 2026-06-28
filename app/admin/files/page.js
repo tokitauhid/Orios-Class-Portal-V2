@@ -5,6 +5,7 @@ import { useSubjectColors } from "@/lib/SubjectContext";
 import { createClient } from "@/lib/supabase/client";
 import AdminCrudPage from "@/components/admin/AdminCrudPage";
 import { FolderOpen } from "lucide-react";
+import { uploadFile } from "@/lib/download";
 
 export default function AdminFilesPage() {
   const { subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
@@ -81,30 +82,21 @@ export default function AdminFilesPage() {
     { key: "type", label: "File Type (Optional)", type: "select", options: typeOptions, placeholder: "Auto-detected if blank" },
     { key: "size", label: "Size (Optional)", type: "text", placeholder: "Auto-calculated if blank" },
     { key: "uploadedBy", label: "Uploaded By", type: "text", required: true, placeholder: "Name or email" },
-    { key: "file", label: "File", type: "file" },
+    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
+    { key: "url", label: "Or Attachment URL", type: "text", placeholder: "https://example.com/file.pdf" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
-      let fileUrl = "";
+      let finalFileUrl = formData.url || "";
       let fileSize = formData.size || "—";
       let fileType = formData.type || "pdf";
 
-      if (formData.file && typeof formData.file !== "string") {
-        const fileObj = formData.file;
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        const fileObj = formData.fileUpload;
         const fileExt = fileObj.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         
-        const { error: uploadErr } = await supabase.storage
-          .from("class-materials")
-          .upload(fileName, fileObj);
-        if (uploadErr) throw uploadErr;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("class-materials")
-          .getPublicUrl(fileName);
-        
-        fileUrl = publicUrl;
+        finalFileUrl = await uploadFile(fileObj, supabase);
 
         // Auto calculate file size if blank
         if (!formData.size) {
@@ -122,21 +114,32 @@ export default function AdminFilesPage() {
             pdf: "pdf",
             doc: "doc",
             docx: "doc",
+            xls: "doc",
+            xlsx: "doc",
+            txt: "doc",
             pptx: "pptx",
             ppt: "pptx",
             zip: "zip",
             rar: "zip",
+            tar: "zip",
+            "7z": "zip",
             c: "code",
+            cpp: "code",
+            java: "code",
             js: "code",
+            ts: "code",
             py: "code",
             png: "image",
             jpg: "image",
             jpeg: "image",
+            webp: "image",
           };
           fileType = extMap[fileExt.toLowerCase()] || "pdf";
         }
-      } else {
-        alert("Please select and upload a file first.");
+      }
+
+      if (!finalFileUrl) {
+        alert("Please upload a file or enter an attachment URL.");
         return;
       }
 
@@ -148,7 +151,7 @@ export default function AdminFilesPage() {
           type: fileType,
           size: fileSize,
           uploaded_by: formData.uploadedBy,
-          url: fileUrl,
+          url: finalFileUrl,
         }])
         .select()
         .single();
@@ -175,25 +178,15 @@ export default function AdminFilesPage() {
 
   const handleUpdate = async (formData) => {
     try {
-      let fileUrl = formData.url;
-      let fileSize = formData.size;
-      let fileType = formData.type;
+      let finalFileUrl = formData.url;
+      let fileSize = formData.size || "—";
+      let fileType = formData.type || "pdf";
 
-      if (formData.file && typeof formData.file !== "string") {
-        const fileObj = formData.file;
+      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
+        const fileObj = formData.fileUpload;
         const fileExt = fileObj.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         
-        const { error: uploadErr } = await supabase.storage
-          .from("class-materials")
-          .upload(fileName, fileObj);
-        if (uploadErr) throw uploadErr;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("class-materials")
-          .getPublicUrl(fileName);
-        
-        fileUrl = publicUrl;
+        finalFileUrl = await uploadFile(fileObj, supabase);
 
         // Auto size
         const bytes = fileObj.size;
@@ -204,22 +197,38 @@ export default function AdminFilesPage() {
         }
         
         // Auto type
-        const extMap = {
-          pdf: "pdf",
-          doc: "doc",
-          docx: "doc",
-          pptx: "pptx",
-          ppt: "pptx",
-          zip: "zip",
-          rar: "zip",
-          c: "code",
-          js: "code",
-          py: "code",
-          png: "image",
-          jpg: "image",
-          jpeg: "image",
-        };
-        fileType = extMap[fileExt.toLowerCase()] || "pdf";
+        if (!formData.type) {
+          const extMap = {
+            pdf: "pdf",
+            doc: "doc",
+            docx: "doc",
+            xls: "doc",
+            xlsx: "doc",
+            txt: "doc",
+            pptx: "pptx",
+            ppt: "pptx",
+            zip: "zip",
+            rar: "zip",
+            tar: "zip",
+            "7z": "zip",
+            c: "code",
+            cpp: "code",
+            java: "code",
+            js: "code",
+            ts: "code",
+            py: "code",
+            png: "image",
+            jpg: "image",
+            jpeg: "image",
+            webp: "image",
+          };
+          fileType = extMap[fileExt.toLowerCase()] || "pdf";
+        }
+      }
+
+      if (!finalFileUrl) {
+        alert("Please upload a file or enter an attachment URL.");
+        return;
       }
 
       const { data: updated, error } = await supabase
@@ -230,7 +239,7 @@ export default function AdminFilesPage() {
           type: fileType,
           size: fileSize,
           uploaded_by: formData.uploadedBy,
-          url: fileUrl,
+          url: finalFileUrl,
         })
         .eq("id", formData.id)
         .select()
