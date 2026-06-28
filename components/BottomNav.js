@@ -20,6 +20,7 @@ import {
   Moon,
   Info,
   Palette,
+  Shield,
 } from "lucide-react";
 
 const tabs = [
@@ -191,6 +192,28 @@ export default function BottomNav() {
                   </span>
                 </div>
               </div>
+
+              {/* Admin Panel */}
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors duration-150 group"
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                  <Shield size={18} strokeWidth={1.8} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 block">
+                    Admin Panel
+                  </span>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
+                    Manage portal content
+                  </span>
+                </div>
+                <svg className="w-4 h-4 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
