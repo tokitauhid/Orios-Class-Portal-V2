@@ -7,9 +7,10 @@ import ScheduleCard from "@/components/ScheduleCard";
 import {
   mockStats,
   mockCountdowns,
-  mockSchedule,
+  mockWeeklyRoutine,
 } from "@/lib/mock-data";
 import { getSubject } from "@/lib/subjects";
+import { getTodayClasses } from "@/lib/schedule-helpers";
 import {
   BookOpen,
   ClipboardList,
@@ -199,28 +200,31 @@ export default function HomePage() {
           </div>
 
           <div className="rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/40 p-4 md:p-5">
-            {mockSchedule.length > 0 ? (
-              <div>
-                {mockSchedule.map((cls) => {
-                  const subject = getSubject(cls.subjectId);
-                  return (
-                    <ScheduleCard
-                      key={cls.id}
-                      time={cls.time}
-                      subject={subject ? subject.code : cls.subjectId}
-                      teacher={cls.teacher}
-                      room={cls.room}
-                      type={cls.type}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-zinc-400 dark:text-zinc-600">
-                <span className="text-2xl mb-2 block">🎉</span>
-                <p className="text-sm">No classes today! Enjoy your day off.</p>
-              </div>
-            )}
+            {(() => {
+              const todayClasses = getTodayClasses(mockWeeklyRoutine);
+              return todayClasses.length > 0 ? (
+                <div>
+                  {todayClasses.map((cls, index) => {
+                    const subject = getSubject(cls.subjectId);
+                    return (
+                      <ScheduleCard
+                        key={`${cls.subjectId}-${index}`}
+                        time={cls.time}
+                        subject={subject ? subject.code : cls.subjectId}
+                        teacher={cls.teacher}
+                        room={cls.room}
+                        type={cls.type}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-zinc-400 dark:text-zinc-600">
+                  <span className="text-2xl mb-2 block">🎉</span>
+                  <p className="text-sm">No classes today! Enjoy your day off.</p>
+                </div>
+              );
+            })()}
           </div>
         </section>
 

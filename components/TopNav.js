@@ -10,7 +10,7 @@ const navLinks = [
   { label: "Notes", href: "/notes" },
   { label: "Assignments", href: "/assignments" },
   { label: "Lab Reports", href: "/lab-reports" },
-  { label: "Calendar", href: "/calendar" },
+  { label: "Schedule", href: "/schedule" },
   { label: "Teachers", href: "/teachers" },
   { label: "Files", href: "/files" },
 ];

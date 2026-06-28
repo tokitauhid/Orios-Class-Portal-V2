@@ -26,7 +26,7 @@ const tabs = [
   { label: "Home", href: "/", icon: Home },
   { label: "Notes", href: "/notes", icon: FileText },
   { label: "Search", href: null, icon: Search, isCenter: true },
-  { label: "Schedule", href: "/calendar", icon: CalendarDays },
+  { label: "Schedule", href: "/schedule", icon: CalendarDays },
   { label: "More", href: null, icon: Menu, isMore: true },
 ];
 
