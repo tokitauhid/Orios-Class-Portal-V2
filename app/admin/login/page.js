@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useAdminAuth } from "@/lib/admin-auth";
 import { Shield, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const { login } = useAdminAuth();
-  const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading } = useAdminAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      window.location.href = "/admin";
+    }
+  }, [authLoading, isAuthenticated]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +29,9 @@ export default function AdminLoginPage() {
 
     const res = await login(email, password);
     if (res.success) {
-      router.push("/admin");
+      // Hard navigation ensures cookies are sent with the request
+      // router.push would do client-side nav where middleware may miss fresh cookies
+      window.location.href = "/admin";
     } else {
       setError(res.error || "Invalid email or password");
       setLoading(false);
