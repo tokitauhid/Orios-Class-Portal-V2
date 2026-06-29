@@ -8,7 +8,9 @@
     "deploy": "npx @opennextjs/cloudflare@latest deploy",
     "preview": "npx @opennextjs/cloudflare@latest build --skipBuild && npx @opennextjs/cloudflare@latest preview",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:clean": "node scripts/clear-db.mjs",
+    "db:seed": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
