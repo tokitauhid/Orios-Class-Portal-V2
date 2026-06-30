@@ -148,7 +148,7 @@ export default function WeekGrid({ routine, deadlineDots = {} }) {
 function GridCell({ slot, isNow, getColor }) {
   const subject = getSubject(slot.subjectId);
   const colors = getColor(slot.subjectId);
-  const subjectCode = subject ? subject.shortName || subject.code : slot.subjectId;
+  const subjectCode = subject ? subject.code || subject.shortName : slot.subjectId;
   const isLab = slot.type === "lab";
 
   return (

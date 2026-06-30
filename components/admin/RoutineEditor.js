@@ -216,7 +216,7 @@ export default function RoutineEditor({ routine, onChange }) {
 function EditableCell({ slot, getColor, getSubject, onFieldChange }) {
   const subject = getSubject(slot.subjectId);
   const colors = getColor(slot.subjectId);
-  const subjectCode = subject ? subject.shortName || subject.code : slot.subjectId;
+  const subjectCode = subject ? subject.code || subject.shortName : slot.subjectId;
 
   return (
     <div className={`h-14 rounded-lg px-2 py-1 flex flex-col justify-center ${colors.bg} ${colors.border} border`}>
