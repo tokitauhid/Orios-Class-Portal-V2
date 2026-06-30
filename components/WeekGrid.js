@@ -170,7 +170,7 @@ function GridCell({ slot, isNow, getColor }) {
         )}
       </div>
       <span className="text-[9px] text-zinc-500 dark:text-zinc-500 leading-tight truncate">
-        {slot.room}
+        {slot.room}{slot.teacherInitials ? ` · ${slot.teacherInitials}` : ""}
       </span>
     </div>
   );

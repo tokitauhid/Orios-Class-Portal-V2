@@ -9,7 +9,7 @@ import { X, Trash2 } from "lucide-react";
  * RoutineEditor — Interactive weekly schedule grid editor.
  * Click a cell to assign/edit a subject. Click X to clear it.
  */
-export default function RoutineEditor({ routine, onChange }) {
+export default function RoutineEditor({ routine, onChange, teachers = [] }) {
   const { getColor, subjects, getSubject } = useSubjectColors();
   const [activeCell, setActiveCell] = useState(null); // { day, slotIndex }
   const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
@@ -45,6 +45,11 @@ export default function RoutineEditor({ routine, onChange }) {
     const subject = getSubject(subjectId);
     if (!subject) return;
 
+    // Find the teacher who teaches this subject
+    const matchedTeacher = teachers.find(
+      (t) => t.teacher_subjects && t.teacher_subjects.some((ts) => ts.subject_id === subjectId)
+    );
+
     const newSchedule = { ...routine.schedule };
     const daySlots = [...(newSchedule[activeCell.day] || [])];
 
@@ -53,7 +58,8 @@ export default function RoutineEditor({ routine, onChange }) {
 
     daySlots[activeCell.slotIndex] = {
       subjectId: subject.id,
-      teacher: "",
+      teacher: matchedTeacher ? matchedTeacher.name : "",
+      teacherInitials: matchedTeacher ? matchedTeacher.initials : "",
       room: "",
       type: "lecture",
     };
@@ -234,14 +240,21 @@ function EditableCell({ slot, getColor, getSubject, onFieldChange }) {
           <option value="lab">LAB</option>
         </select>
       </div>
-      <input
-        type="text"
-        value={slot.room || ""}
-        onChange={(e) => onFieldChange("room", e.target.value)}
-        onClick={(e) => e.stopPropagation()}
-        placeholder="Room"
-        className="text-[9px] bg-transparent border-none outline-none text-zinc-500 dark:text-zinc-500 placeholder:text-zinc-300 dark:placeholder:text-zinc-700 w-full leading-tight"
-      />
+      <div className="flex items-center justify-between gap-1 text-[9px] text-zinc-500 dark:text-zinc-500 leading-tight">
+        <input
+          type="text"
+          value={slot.room || ""}
+          onChange={(e) => onFieldChange("room", e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          placeholder="Room"
+          className="bg-transparent border-none outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700 w-full leading-tight"
+        />
+        {slot.teacherInitials && (
+          <span className="font-semibold text-zinc-500 dark:text-zinc-400 select-none uppercase shrink-0">
+            {slot.teacherInitials}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export default function HomePage() {
       try {
         const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes, slotsRes] = await Promise.all([
           supabase.from("routine").select("*"),
-          supabase.from("teachers").select("id, name"),
+          supabase.from("teachers").select("id, name, initials"),
           supabase.from("assignments").select("*"),
           supabase.from("lab_reports").select("*"),
           supabase.from("exams").select("*"),
@@ -85,6 +85,7 @@ export default function HomePage() {
             schedule[day][index] = {
               subjectId: row.subject_id,
               teacher: teacherObj ? teacherObj.name : "",
+              teacherInitials: teacherObj ? teacherObj.initials : "",
               room: row.room || "",
               type: row.type || "lecture",
             };

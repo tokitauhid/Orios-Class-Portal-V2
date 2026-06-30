@@ -63,7 +63,7 @@ export default function AdminRoutinePage() {
     try {
       const [routRes, teachRes, subRes, slotsRes] = await Promise.all([
         supabase.from("routine").select("*"),
-        supabase.from("teachers").select("id, name"),
+        supabase.from("teachers").select("id, name, initials, teacher_subjects(subject_id)"),
         supabase.from("subjects").select("*").order("code", { ascending: true }),
         supabase.from("time_slots").select("*").order("sort_order", { ascending: true }),
       ]);
@@ -106,6 +106,7 @@ export default function AdminRoutinePage() {
           schedule[day][index] = {
             subjectId: row.subject_id,
             teacher: teacherObj ? teacherObj.name : "",
+            teacherInitials: teacherObj ? teacherObj.initials : "",
             room: row.room || "",
             type: row.type || "lecture",
           };
@@ -231,11 +232,18 @@ export default function AdminRoutinePage() {
         const slots = routine.schedule[dayName] || [];
         slots.forEach((slot, index) => {
           if (slot && index < routine.timeSlots.length) {
+            let teacherId = getTeacherIdByName(slot.teacher);
+            if (!teacherId && slot.subjectId) {
+              const matchedTeacher = teachers.find(
+                (t) => t.teacher_subjects && t.teacher_subjects.some((ts) => ts.subject_id === slot.subjectId)
+              );
+              teacherId = matchedTeacher ? matchedTeacher.id : null;
+            }
             routineSlotsToInsert.push({
               day_name: dayName,
               time_slot_index: index,
               subject_id: slot.subjectId,
-              teacher_id: getTeacherIdByName(slot.teacher),
+              teacher_id: teacherId,
               room: slot.room || "",
               type: slot.type || "lecture",
             });
@@ -452,7 +460,7 @@ export default function AdminRoutinePage() {
         </div>
 
         {/* Editor Grid */}
-        <RoutineEditor routine={routine} onChange={setRoutine} />
+        <RoutineEditor routine={routine} onChange={setRoutine} teachers={teachers} />
 
         {/* Legend */}
         <div className="mt-4 flex items-center gap-4 text-[10px] text-zinc-400 dark:text-zinc-600">

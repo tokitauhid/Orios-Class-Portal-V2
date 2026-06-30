@@ -311,6 +311,7 @@ export default function AdminNewPage() {
 - **Cloudflare & Supabase Migration**: Replaced simulated localStorage auth and static mock arrays with active Supabase PostgreSQL database integration, Supabase Auth, and Supabase Storage. Set up `@supabase/ssr` cookies/session sync, refactored Next.js Edge middleware to verify JWTs, configured files uploader to write to Supabase Storage, and verified Next.js compiler builds pass successfully.
 - **Global Search Overlay & Cloudflare Fixes**: Created the `SearchOverlay` component for global search (command palette style). Integrated with keyboard shortcuts (⌘K/Ctrl+K, `/`), parallel Supabase queries across all entities, and arrow key list navigation. Connected desktop homepage search bar and mobile BottomNav FAB. Resolved `__name is not defined` ReferenceError by setting `keep_names: false` in `wrangler.jsonc`.
 - **Subject Code Display in Routine**: Modified the weekly schedule grid (`WeekGrid.js`) and the routine editor (`RoutineEditor.js`) to display the full subject course code (e.g., `CSE 1201`) instead of the abbreviated subject name (`CSE`).
+- **Auto-assigned Teacher Initials**: Integrated teacher initials lookup with subject assignments in the routine grid. Updated Next.js views and admin panels to fetch and propagate teacher initials, displaying them inline within `WeekGrid.js` and `RoutineEditor.js` cells alongside the room numbers.
 
 ## How to use this skill
 - Before writing new code, read this file to understand established patterns.
