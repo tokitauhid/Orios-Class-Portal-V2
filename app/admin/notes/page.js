@@ -77,6 +77,7 @@ export default function AdminNotesPage() {
             subjectId: n.subject_id,
             type: n.type,
             url: n.url,
+            attachments: n.attachments || [],
             date: new Date(n.created_at).toISOString().split("T")[0],
           }))
         );
@@ -105,6 +106,18 @@ export default function AdminNotesPage() {
       },
     },
     { key: "type", label: "Type", render: (item) => item.type?.toUpperCase() },
+    {
+      key: "attachments",
+      label: "Attachments",
+      render: (item) => {
+        const count = (item.attachments || []).length;
+        return (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+            {count} {count === 1 ? "file" : "files"}
+          </span>
+        );
+      },
+    },
     { key: "date", label: "Date" },
   ], [getSubject]);
 
@@ -112,24 +125,33 @@ export default function AdminNotesPage() {
     { key: "title", label: "Title", type: "text", required: true, placeholder: "Note title" },
     { key: "description", label: "Description", type: "textarea", placeholder: "Brief description" },
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
-    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
-    { key: "url", label: "Or URL / Resource Link", type: "text", placeholder: "https://example.com/file.pdf" },
+    { key: "attachments", label: "Attachments", type: "attachments" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
-      let finalUrl = formData.url || "";
-
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        finalUrl = await uploadFile(formData.fileUpload, supabase);
+      const finalAttachments = [];
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          url = await uploadFile(att.file, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
+        }
       }
 
-      if (!finalUrl) {
-        alert("Please upload a file or enter an external URL.");
+      if (finalAttachments.length === 0) {
+        alert("Please add at least one attachment.");
         return;
       }
 
-      const noteType = getFileType(formData.fileUpload, finalUrl, true);
+      const finalUrl = finalAttachments[0].url;
+      const noteType = getFileType(null, finalUrl, true);
 
       const { data: inserted, error } = await supabase
         .from("notes")
@@ -139,6 +161,7 @@ export default function AdminNotesPage() {
           subject_id: formData.subjectId,
           type: noteType,
           url: finalUrl,
+          attachments: finalAttachments,
         }])
         .select()
         .single();
@@ -153,6 +176,7 @@ export default function AdminNotesPage() {
           subjectId: inserted.subject_id,
           type: inserted.type,
           url: inserted.url,
+          attachments: inserted.attachments || [],
           date: new Date(inserted.created_at).toISOString().split("T")[0],
         },
         ...prev,
@@ -164,18 +188,28 @@ export default function AdminNotesPage() {
 
   const handleUpdate = async (formData) => {
     try {
-      let finalUrl = formData.url || "";
-
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        finalUrl = await uploadFile(formData.fileUpload, supabase);
+      const finalAttachments = [];
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          url = await uploadFile(att.file, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
+        }
       }
 
-      if (!finalUrl) {
-        alert("Please upload a file or enter an external URL.");
+      if (finalAttachments.length === 0) {
+        alert("Please add at least one attachment.");
         return;
       }
 
-      const noteType = getFileType(formData.fileUpload, finalUrl, true);
+      const finalUrl = finalAttachments[0].url;
+      const noteType = getFileType(null, finalUrl, true);
 
       const { data: updated, error } = await supabase
         .from("notes")
@@ -185,6 +219,7 @@ export default function AdminNotesPage() {
           subject_id: formData.subjectId,
           type: noteType,
           url: finalUrl,
+          attachments: finalAttachments,
         })
         .eq("id", formData.id)
         .select()
@@ -202,6 +237,7 @@ export default function AdminNotesPage() {
                 subjectId: updated.subject_id,
                 type: updated.type,
                 url: updated.url,
+                attachments: updated.attachments || [],
                 date: new Date(updated.created_at).toISOString().split("T")[0],
               }
             : n

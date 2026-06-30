@@ -66,6 +66,7 @@ export default function NotesPage() {
           subjectId: n.subject_id,
           type: n.type,
           url: n.url,
+          attachments: n.attachments || [],
           date: n.created_at,
         }));
         setNotes(mapped);
@@ -221,7 +222,15 @@ export default function NotesPage() {
                       });
 
                       const handleCardClick = () => {
-                        if (note.url) {
+                        if (note.attachments && note.attachments.length > 0) {
+                          const first = note.attachments[0];
+                          const type = first.type || (first.url.includes("/storage/v1/object/public/") ? "upload" : "link");
+                          if (type === "link") {
+                            window.open(first.url, "_blank", "noopener,noreferrer");
+                          } else {
+                            triggerDownload(first.url, first.name);
+                          }
+                        } else if (note.url) {
                           if (note.type === "link") {
                             window.open(note.url, "_blank", "noopener,noreferrer");
                           } else {
@@ -254,6 +263,34 @@ export default function NotesPage() {
                             <p className="text-xs text-zinc-500 dark:text-zinc-500 line-clamp-1">
                               {note.description}
                             </p>
+                            {note.attachments && note.attachments.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                                {note.attachments.map((att, idx) => {
+                                  const attType = att.type || (att.url.includes("/storage/v1/object/public/") ? "upload" : "link");
+                                  return (
+                                    <button
+                                      key={idx}
+                                      onClick={() => {
+                                        if (attType === "link") {
+                                          window.open(att.url, "_blank", "noopener,noreferrer");
+                                        } else {
+                                          triggerDownload(att.url, att.name);
+                                        }
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-zinc-200/60 dark:border-zinc-850 font-medium"
+                                    >
+                                      <Paperclip size={8} className="shrink-0" />
+                                      <span className="truncate max-w-[120px]">{att.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : note.url ? (
+                              <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                                <Paperclip size={10} className="shrink-0" />
+                                <span className="truncate group-hover:underline">View Attachment</span>
+                              </div>
+                            ) : null}
                           </div>
 
                           {/* Date */}

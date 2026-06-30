@@ -31,6 +31,7 @@ export default function AdminAssignmentsPage() {
             dueDate: a.due_date ? new Date(a.due_date).toISOString().split("T")[0] : "",
             status: a.status,
             file: a.file_url,
+            attachments: a.attachments || [],
           }))
         );
       } catch (err) {
@@ -83,6 +84,18 @@ export default function AdminAssignmentsPage() {
         );
       },
     },
+    {
+      key: "attachments",
+      label: "Attachments",
+      render: (item) => {
+        const count = (item.attachments || []).length;
+        return (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+            {count} {count === 1 ? "file" : "files"}
+          </span>
+        );
+      },
+    },
   ], [getSubject]);
 
   const fields = useMemo(() => [
@@ -91,16 +104,26 @@ export default function AdminAssignmentsPage() {
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
     { key: "dueDate", label: "Due Date", type: "date", required: true },
     { key: "status", label: "Status", type: "select", required: true, options: statusOptions },
-    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
-    { key: "file", label: "Or Attachment URL", type: "text", placeholder: "https://example.com/sheet.pdf" },
+    { key: "attachments", label: "Attachments", type: "attachments" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
-      let finalFileUrl = formData.file || "";
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      const finalAttachments = [];
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          url = await uploadFile(att.file, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
+        }
       }
+      const finalFileUrl = finalAttachments[0]?.url || "";
 
       const { data: inserted, error } = await supabase
         .from("assignments")
@@ -111,6 +134,7 @@ export default function AdminAssignmentsPage() {
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
           file_url: finalFileUrl,
+          attachments: finalAttachments,
         }])
         .select()
         .single();
@@ -126,6 +150,7 @@ export default function AdminAssignmentsPage() {
           dueDate: inserted.due_date ? new Date(inserted.due_date).toISOString().split("T")[0] : "",
           status: inserted.status,
           file: inserted.file_url,
+          attachments: inserted.attachments || [],
         },
         ...prev,
       ]);
@@ -136,10 +161,21 @@ export default function AdminAssignmentsPage() {
 
   const handleUpdate = async (formData) => {
     try {
-      let finalFileUrl = formData.file || "";
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        finalFileUrl = await uploadFile(formData.fileUpload, supabase);
+      const finalAttachments = [];
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          url = await uploadFile(att.file, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
+        }
       }
+      const finalFileUrl = finalAttachments[0]?.url || "";
 
       const { data: updated, error } = await supabase
         .from("assignments")
@@ -150,6 +186,7 @@ export default function AdminAssignmentsPage() {
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           status: formData.status,
           file_url: finalFileUrl,
+          attachments: finalAttachments,
         })
         .eq("id", formData.id)
         .select()
@@ -168,6 +205,7 @@ export default function AdminAssignmentsPage() {
                 dueDate: updated.due_date ? new Date(updated.due_date).toISOString().split("T")[0] : "",
                 status: updated.status,
                 file: updated.file_url,
+                attachments: updated.attachments || [],
               }
             : a
         )

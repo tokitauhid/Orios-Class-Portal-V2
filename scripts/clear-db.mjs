@@ -32,6 +32,11 @@ async function clearDatabase() {
     const { error: routineErr } = await supabase.from("routine").delete().neq("time_slot_index", -1);
     if (routineErr) throw routineErr;
 
+    // 2.5 Delete Time Slots
+    console.log("🗑️ Clearing time slots...");
+    const { error: slotsErr } = await supabase.from("time_slots").delete().neq("id", 0);
+    if (slotsErr) throw slotsErr;
+
     // 3. Delete Files
     console.log("🗑️ Clearing files...");
     const { error: filesErr } = await supabase.from("files").delete().neq("id", 0);

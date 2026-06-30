@@ -50,6 +50,7 @@ export default function FilesPage() {
           size: f.size,
           uploadedBy: f.uploaded_by,
           url: f.url,
+          attachments: f.attachments || [],
           date: f.created_at,
         }));
         setFiles(mapped);
@@ -173,10 +174,18 @@ export default function FilesPage() {
                 day: "numeric",
               });
 
+              const handleCardClick = () => {
+                if (file.attachments && file.attachments.length > 0) {
+                  handleDownload(file.attachments[0].url, file.attachments[0].name);
+                } else {
+                  handleDownload(file.url, file.name);
+                }
+              };
+
               return (
                 <div
                   key={file.id}
-                  onClick={() => handleDownload(file.url, file.name)}
+                  onClick={handleCardClick}
                   className="flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
                 >
                   {/* File icon */}
@@ -203,6 +212,20 @@ export default function FilesPage() {
                         {formattedDate}
                       </span>
                     </div>
+                    {file.attachments && file.attachments.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                        {file.attachments.map((att, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleDownload(att.url, att.name)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-zinc-200/60 dark:border-zinc-850 font-medium"
+                          >
+                            <Download size={8} className="shrink-0" />
+                            <span className="truncate max-w-[120px]">{att.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
 
                   {/* Download button */}

@@ -78,6 +78,7 @@ export default function AdminFilesPage() {
             size: f.size,
             uploadedBy: f.uploaded_by,
             url: f.url,
+            attachments: f.attachments || [],
             date: new Date(f.created_at).toISOString().split("T")[0],
           }))
         );
@@ -111,6 +112,18 @@ export default function AdminFilesPage() {
       render: (item) => item.type?.toUpperCase(),
     },
     { key: "size", label: "Size" },
+    {
+      key: "attachments",
+      label: "Attachments",
+      render: (item) => {
+        const count = (item.attachments || []).length;
+        return (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+            {count} {count === 1 ? "file" : "files"}
+          </span>
+        );
+      },
+    },
     { key: "uploadedBy", label: "Uploaded By" },
   ], [getSubject]);
 
@@ -119,37 +132,46 @@ export default function AdminFilesPage() {
     { key: "subjectId", label: "Subject", type: "select", required: true, options: subjectOptions },
     { key: "size", label: "Size (Optional)", type: "text", placeholder: "Auto-calculated if blank" },
     { key: "uploadedBy", label: "Uploaded By", type: "text", required: true, placeholder: "Name or email" },
-    { key: "fileUpload", label: "Upload File Attachment", type: "file" },
-    { key: "url", label: "Or Attachment URL", type: "text", placeholder: "https://example.com/file.pdf" },
+    { key: "attachments", label: "Attachments", type: "attachments" },
   ], [subjectOptions]);
 
   const handleAdd = async (formData) => {
     try {
-      let finalFileUrl = formData.url || "";
-      let fileSize = formData.size || "—";
+      const finalAttachments = [];
+      let totalBytes = 0;
 
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        const fileObj = formData.fileUpload;
-        
-        finalFileUrl = await uploadFile(fileObj, supabase);
-
-        // Auto calculate file size if blank
-        if (!formData.size) {
-          const bytes = fileObj.size;
-          if (bytes < 1024 * 1024) {
-            fileSize = `${(bytes / 1024).toFixed(1)} KB`;
-          } else {
-            fileSize = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-          }
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          const fileObj = att.file;
+          totalBytes += fileObj.size;
+          url = await uploadFile(fileObj, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
         }
       }
 
-      if (!finalFileUrl) {
-        alert("Please upload a file or enter an attachment URL.");
+      if (finalAttachments.length === 0) {
+        alert("Please add at least one attachment.");
         return;
       }
 
-      const fileType = getFileType(formData.fileUpload, finalFileUrl, false);
+      const finalFileUrl = finalAttachments[0].url;
+      const fileType = getFileType(null, finalFileUrl, false);
+
+      let fileSize = formData.size || "—";
+      if (!formData.size && totalBytes > 0) {
+        if (totalBytes < 1024 * 1024) {
+          fileSize = `${(totalBytes / 1024).toFixed(1)} KB`;
+        } else {
+          fileSize = `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+      }
 
       const { data: inserted, error } = await supabase
         .from("files")
@@ -160,6 +182,7 @@ export default function AdminFilesPage() {
           size: fileSize,
           uploaded_by: formData.uploadedBy,
           url: finalFileUrl,
+          attachments: finalAttachments,
         }])
         .select()
         .single();
@@ -175,6 +198,7 @@ export default function AdminFilesPage() {
           size: inserted.size,
           uploadedBy: inserted.uploaded_by,
           url: inserted.url,
+          attachments: inserted.attachments || [],
           date: new Date(inserted.created_at).toISOString().split("T")[0],
         },
         ...prev,
@@ -186,29 +210,41 @@ export default function AdminFilesPage() {
 
   const handleUpdate = async (formData) => {
     try {
-      let finalFileUrl = formData.url;
-      let fileSize = formData.size || "—";
+      const finalAttachments = [];
+      let totalBytes = 0;
 
-      if (formData.fileUpload && typeof formData.fileUpload !== "string") {
-        const fileObj = formData.fileUpload;
-        
-        finalFileUrl = await uploadFile(fileObj, supabase);
-
-        // Auto size
-        const bytes = fileObj.size;
-        if (bytes < 1024 * 1024) {
-          fileSize = `${(bytes / 1024).toFixed(1)} KB`;
-        } else {
-          fileSize = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      for (const att of (formData.attachments || [])) {
+        let url = att.url || "";
+        if (att.file && typeof att.file !== "string") {
+          const fileObj = att.file;
+          totalBytes += fileObj.size;
+          url = await uploadFile(fileObj, supabase);
+        }
+        if (url) {
+          finalAttachments.push({
+            name: att.name || "Attachment",
+            url,
+            type: att.type || (url.includes("/storage/v1/object/public/") ? "upload" : "link"),
+          });
         }
       }
 
-      if (!finalFileUrl) {
-        alert("Please upload a file or enter an attachment URL.");
+      if (finalAttachments.length === 0) {
+        alert("Please add at least one attachment.");
         return;
       }
 
-      const fileType = getFileType(formData.fileUpload, finalFileUrl, false);
+      const finalFileUrl = finalAttachments[0].url;
+      const fileType = getFileType(null, finalFileUrl, false);
+
+      let fileSize = formData.size || "—";
+      if (!formData.size && totalBytes > 0) {
+        if (totalBytes < 1024 * 1024) {
+          fileSize = `${(totalBytes / 1024).toFixed(1)} KB`;
+        } else {
+          fileSize = `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+      }
 
       const { data: updated, error } = await supabase
         .from("files")
@@ -219,6 +255,7 @@ export default function AdminFilesPage() {
           size: fileSize,
           uploaded_by: formData.uploadedBy,
           url: finalFileUrl,
+          attachments: finalAttachments,
         })
         .eq("id", formData.id)
         .select()
@@ -237,6 +274,7 @@ export default function AdminFilesPage() {
                 size: updated.size,
                 uploadedBy: updated.uploaded_by,
                 url: updated.url,
+                attachments: updated.attachments || [],
                 date: new Date(updated.created_at).toISOString().split("T")[0],
               }
             : f

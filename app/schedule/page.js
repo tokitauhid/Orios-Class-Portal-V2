@@ -14,7 +14,7 @@ import { CalendarDays, Clock, LayoutGrid, List } from "lucide-react";
 
 // Standard timeslots and days for the schedule
 const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+const defaultTimeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
 
 export default function SchedulePage() {
   const [viewMode, setViewMode] = useState("day"); // "day" | "week"
@@ -22,7 +22,7 @@ export default function SchedulePage() {
   const [mounted, setMounted] = useState(false);
   const { getColor, getSubject, isLoading: subjectsLoading } = useSubjectColors();
 
-  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots: [], days, schedule: {} });
   const [assignments, setAssignments] = useState([]);
   const [labReports, setLabReports] = useState([]);
   const [exams, setExams] = useState([]);
@@ -36,7 +36,7 @@ export default function SchedulePage() {
   useEffect(() => {
     async function loadScheduleData() {
       try {
-        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes] = await Promise.all([
+        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes, slotsRes] = await Promise.all([
           supabase.from("routine").select("*"),
           supabase.from("teachers").select("id, name"),
           supabase.from("assignments").select("*"),
@@ -44,6 +44,7 @@ export default function SchedulePage() {
           supabase.from("exams").select("*"),
           supabase.from("notes").select("id, title, url"),
           supabase.from("files").select("id, name, url"),
+          supabase.from("time_slots").select("*").order("sort_order", { ascending: true }),
         ]);
 
         if (routRes.error) throw routRes.error;
@@ -51,6 +52,7 @@ export default function SchedulePage() {
         if (assignRes.error) throw assignRes.error;
         if (labRes.error) throw labRes.error;
         if (examsRes.error) throw examsRes.error;
+        if (slotsRes.error) throw slotsRes.error;
 
         const dbRoutine = routRes.data || [];
         const dbTeachers = teachRes.data || [];
@@ -59,17 +61,22 @@ export default function SchedulePage() {
         const dbExams = examsRes.data || [];
         const dbNotes = notesRes.data || [];
         const dbFiles = filesRes.data || [];
+        
+        // Load Time Slots
+        const dbSlots = (slotsRes.data && slotsRes.data.length > 0)
+          ? slotsRes.data.map((s) => s.time_label)
+          : defaultTimeSlots;
 
         // Map Routine Slots to Weekly Routine
         const schedule = {};
         days.forEach((d) => {
-          schedule[d] = Array(8).fill(null);
+          schedule[d] = Array(dbSlots.length).fill(null);
         });
 
         dbRoutine.forEach((row) => {
           const day = row.day_name;
           const index = row.time_slot_index;
-          if (schedule[day] && index >= 0 && index < 8) {
+          if (schedule[day] && index >= 0 && index < dbSlots.length) {
             const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
             schedule[day][index] = {
               subjectId: row.subject_id,
@@ -80,7 +87,7 @@ export default function SchedulePage() {
           }
         });
 
-        setWeeklyRoutine({ timeSlots, days, schedule });
+        setWeeklyRoutine({ timeSlots: dbSlots, days, schedule });
 
         // Map Assignments
         setAssignments(
@@ -91,7 +98,8 @@ export default function SchedulePage() {
             subjectId: a.subject_id,
             dueDate: a.due_date,
             status: a.status,
-            file: a.file_url,
+            file: a.attachments?.[0]?.url || a.file_url || null,
+            attachments: a.attachments || [],
           }))
         );
 
@@ -105,7 +113,8 @@ export default function SchedulePage() {
             labNumber: l.lab_number,
             dueDate: l.due_date,
             status: l.status,
-            file: l.file_url,
+            file: l.attachments?.[0]?.url || l.file_url || null,
+            attachments: l.attachments || [],
           }))
         );
 

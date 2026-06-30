@@ -18,14 +18,14 @@ import {
 import Link from "next/link";
 
 const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+const defaultTimeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
 
 export default function HomePage() {
   const { getColor, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [weeklyRoutine, setWeeklyRoutine] = useState({ timeSlots: [], days, schedule: {} });
   const [assignments, setAssignments] = useState([]);
   const [labReports, setLabReports] = useState([]);
   const [exams, setExams] = useState([]);
@@ -40,7 +40,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadHomeData() {
       try {
-        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes] = await Promise.all([
+        const [routRes, teachRes, assignRes, labRes, examsRes, notesRes, filesRes, slotsRes] = await Promise.all([
           supabase.from("routine").select("*"),
           supabase.from("teachers").select("id, name"),
           supabase.from("assignments").select("*"),
@@ -48,6 +48,7 @@ export default function HomePage() {
           supabase.from("exams").select("*"),
           supabase.from("notes").select("id, title, url"),
           supabase.from("files").select("id, name, url"),
+          supabase.from("time_slots").select("*").order("sort_order", { ascending: true }),
         ]);
 
         if (routRes.error) throw routRes.error;
@@ -55,6 +56,7 @@ export default function HomePage() {
         if (assignRes.error) throw assignRes.error;
         if (labRes.error) throw labRes.error;
         if (examsRes.error) throw examsRes.error;
+        if (slotsRes.error) throw slotsRes.error;
 
         const dbRoutine = routRes.data || [];
         const dbTeachers = teachRes.data || [];
@@ -64,16 +66,21 @@ export default function HomePage() {
         const dbNotes = notesRes.data || [];
         const dbFiles = filesRes.data || [];
 
+        // Load Time Slots
+        const dbSlots = (slotsRes.data && slotsRes.data.length > 0)
+          ? slotsRes.data.map((s) => s.time_label)
+          : defaultTimeSlots;
+
         // 1. Build Routine Structure
         const schedule = {};
         days.forEach((d) => {
-          schedule[d] = Array(8).fill(null);
+          schedule[d] = Array(dbSlots.length).fill(null);
         });
 
         dbRoutine.forEach((row) => {
           const day = row.day_name;
           const index = row.time_slot_index;
-          if (schedule[day] && index >= 0 && index < 8) {
+          if (schedule[day] && index >= 0 && index < dbSlots.length) {
             const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
             schedule[day][index] = {
               subjectId: row.subject_id,
@@ -83,7 +90,7 @@ export default function HomePage() {
             };
           }
         });
-        const mappedRoutine = { timeSlots, days, schedule };
+        const mappedRoutine = { timeSlots: dbSlots, days, schedule };
         setWeeklyRoutine(mappedRoutine);
 
         // 2. Map Assignments
@@ -94,7 +101,8 @@ export default function HomePage() {
           subjectId: a.subject_id,
           dueDate: a.due_date,
           status: a.status,
-          file: a.file_url,
+          file: a.attachments?.[0]?.url || a.file_url || null,
+          attachments: a.attachments || [],
           type: "Assignment",
         }));
         setAssignments(mappedAssignments);
@@ -108,7 +116,8 @@ export default function HomePage() {
           labNumber: l.lab_number,
           dueDate: l.due_date,
           status: l.status,
-          file: l.file_url,
+          file: l.attachments?.[0]?.url || l.file_url || null,
+          attachments: l.attachments || [],
           type: "Lab Report",
         }));
         setLabReports(mappedLabReports);

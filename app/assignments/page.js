@@ -60,6 +60,7 @@ export default function AssignmentsPage() {
           dueDate: a.due_date,
           status: a.status,
           file: a.file_url,
+          attachments: a.attachments || [],
         }));
         setAssignments(mapped);
       } catch (err) {
@@ -207,17 +208,21 @@ export default function AssignmentsPage() {
 
               // Allow clicking to download/view the file if it exists
               const handleCardClick = () => {
-                if (assignment.file) {
+                if (assignment.attachments && assignment.attachments.length > 0) {
+                  triggerDownload(assignment.attachments[0].url, assignment.attachments[0].name);
+                } else if (assignment.file) {
                   triggerDownload(assignment.file, assignment.title);
                 }
               };
+
+              const hasFile = (assignment.attachments && assignment.attachments.length > 0) || !!assignment.file;
 
               return (
                 <div
                   key={assignment.id}
                   onClick={handleCardClick}
                   className={`flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 ${
-                    assignment.file ? "cursor-pointer group" : ""
+                    hasFile ? "cursor-pointer group" : ""
                   }`}
                 >
                   {/* Status indicator */}
@@ -226,7 +231,7 @@ export default function AssignmentsPage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${assignment.file ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
+                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${hasFile ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
                         {assignment.title}
                       </h3>
                       <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${config.badge}`}>
@@ -237,12 +242,25 @@ export default function AssignmentsPage() {
                       <span className={`font-medium ${subjectColors.muted}`}>{subjectCode}</span>
                       {" · "}{assignment.description}
                     </p>
-                    {assignment.file && (
+                    {assignment.attachments && assignment.attachments.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                        {assignment.attachments.map((att, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => triggerDownload(att.url, att.name)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-zinc-200/60 dark:border-zinc-850 font-medium"
+                          >
+                            <Paperclip size={8} className="shrink-0" />
+                            <span className="truncate max-w-[120px]">{att.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : assignment.file ? (
                       <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
                         <Paperclip size={10} className="shrink-0" />
                         <span className="truncate group-hover:underline">View Attachment</span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Due date */}

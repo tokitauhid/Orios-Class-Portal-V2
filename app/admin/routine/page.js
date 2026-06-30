@@ -7,10 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import RoutineEditor from "@/components/admin/RoutineEditor";
 import AdminDataTable from "@/components/admin/AdminDataTable";
 import AdminFormDrawer from "@/components/admin/AdminFormDrawer";
-import { CalendarDays, Save, RotateCcw, BookOpen, Plus } from "lucide-react";
+import { CalendarDays, Save, RotateCcw, BookOpen, Plus, X } from "lucide-react";
 
 const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const timeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+const defaultTimeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
 
 const colorOptions = availableColors.map((c) => ({
   value: c,
@@ -53,7 +53,7 @@ export default function AdminRoutinePage() {
   const [editingSubject, setEditingSubject] = useState(null);
 
   // State for Routine
-  const [routine, setRoutine] = useState({ timeSlots, days, schedule: {} });
+  const [routine, setRoutine] = useState({ timeSlots: [], days, schedule: {} });
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -61,15 +61,17 @@ export default function AdminRoutinePage() {
   // Load routine and teachers data
   const loadRoutineData = async () => {
     try {
-      const [routRes, teachRes, subRes] = await Promise.all([
+      const [routRes, teachRes, subRes, slotsRes] = await Promise.all([
         supabase.from("routine").select("*"),
         supabase.from("teachers").select("id, name"),
         supabase.from("subjects").select("*").order("code", { ascending: true }),
+        supabase.from("time_slots").select("*").order("sort_order", { ascending: true }),
       ]);
 
       if (routRes.error) throw routRes.error;
       if (teachRes.error) throw teachRes.error;
       if (subRes.error) throw subRes.error;
+      if (slotsRes.error) throw slotsRes.error;
 
       const dbTeachers = teachRes.data || [];
       setTeachers(dbTeachers);
@@ -85,16 +87,21 @@ export default function AdminRoutinePage() {
       }));
       setSubjectsData(mappedSubjects);
 
+      // Load Time Slots
+      const dbSlots = (slotsRes.data && slotsRes.data.length > 0)
+        ? slotsRes.data.map((s) => s.time_label)
+        : defaultTimeSlots;
+
       // Map routine
       const schedule = {};
       days.forEach((d) => {
-        schedule[d] = Array(8).fill(null);
+        schedule[d] = Array(dbSlots.length).fill(null);
       });
 
       (routRes.data || []).forEach((row) => {
         const day = row.day_name;
         const index = row.time_slot_index;
-        if (schedule[day] && index >= 0 && index < 8) {
+        if (schedule[day] && index >= 0 && index < dbSlots.length) {
           const teacherObj = dbTeachers.find((t) => t.id === row.teacher_id);
           schedule[day][index] = {
             subjectId: row.subject_id,
@@ -105,7 +112,7 @@ export default function AdminRoutinePage() {
         }
       });
 
-      setRoutine({ timeSlots, days, schedule });
+      setRoutine({ timeSlots: dbSlots, days, schedule });
     } catch (err) {
       console.error("Error loading routine page data:", err);
     } finally {
@@ -193,7 +200,24 @@ export default function AdminRoutinePage() {
     try {
       setLoading(true);
 
-      // 1. Delete all old routine slots
+      // 1. Delete all old time slots
+      const { error: delSlotsErr } = await supabase
+        .from("time_slots")
+        .delete()
+        .neq("id", 0); // deletes all rows
+
+      if (delSlotsErr) throw delSlotsErr;
+
+      // 2. Insert new time slots
+      const slotsToInsert = routine.timeSlots.map((slot, index) => ({
+        time_label: slot,
+        sort_order: index,
+      }));
+
+      const { error: insSlotsErr } = await supabase.from("time_slots").insert(slotsToInsert);
+      if (insSlotsErr) throw insSlotsErr;
+
+      // 3. Delete all old routine slots
       const { error: delErr } = await supabase
         .from("routine")
         .delete()
@@ -201,13 +225,13 @@ export default function AdminRoutinePage() {
 
       if (delErr) throw delErr;
 
-      // 2. Prepare new slots
-      const slotsToInsert = [];
+      // 4. Prepare new routine slots
+      const routineSlotsToInsert = [];
       Object.keys(routine.schedule).forEach((dayName) => {
         const slots = routine.schedule[dayName] || [];
         slots.forEach((slot, index) => {
-          if (slot) {
-            slotsToInsert.push({
+          if (slot && index < routine.timeSlots.length) {
+            routineSlotsToInsert.push({
               day_name: dayName,
               time_slot_index: index,
               subject_id: slot.subjectId,
@@ -219,9 +243,9 @@ export default function AdminRoutinePage() {
         });
       });
 
-      // 3. Insert new routine slots if any
-      if (slotsToInsert.length > 0) {
-        const { error: insErr } = await supabase.from("routine").insert(slotsToInsert);
+      // 5. Insert new routine slots if any
+      if (routineSlotsToInsert.length > 0) {
+        const { error: insErr } = await supabase.from("routine").insert(routineSlotsToInsert);
         if (insErr) throw insErr;
       }
 
@@ -236,6 +260,39 @@ export default function AdminRoutinePage() {
 
   function handleResetRoutine() {
     loadRoutineData();
+  }
+
+  function handleAddTimeSlot() {
+    const newSlots = [...routine.timeSlots, "4:00"];
+    const newSchedule = { ...routine.schedule };
+    Object.keys(newSchedule).forEach((day) => {
+      newSchedule[day] = [...(newSchedule[day] || []), null];
+    });
+    setRoutine({ ...routine, timeSlots: newSlots, schedule: newSchedule });
+  }
+
+  function handleEditTimeSlot(index, value) {
+    const newSlots = [...routine.timeSlots];
+    newSlots[index] = value;
+    setRoutine({ ...routine, timeSlots: newSlots });
+  }
+
+  function handleRemoveTimeSlot(index) {
+    if (routine.timeSlots.length <= 1) {
+      alert("At least one time slot is required.");
+      return;
+    }
+    const newSlots = [...routine.timeSlots];
+    newSlots.splice(index, 1);
+
+    const newSchedule = { ...routine.schedule };
+    Object.keys(newSchedule).forEach((day) => {
+      const daySlots = [...(newSchedule[day] || [])];
+      daySlots.splice(index, 1);
+      newSchedule[day] = daySlots;
+    });
+
+    setRoutine({ ...routine, timeSlots: newSlots, schedule: newSchedule });
   }
 
   if (loading || subjectsLoading) {
@@ -349,6 +406,49 @@ export default function AdminRoutinePage() {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Time Slots Manager */}
+        <div className="mb-6 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+              Time Slots Configuration
+            </h3>
+            <button
+              onClick={handleAddTimeSlot}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 dark:bg-indigo-500 text-white text-xs font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
+            >
+              <Plus size={12} strokeWidth={2.5} />
+              Add Slot
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {routine.timeSlots.map((slot, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm"
+              >
+                <input
+                  type="text"
+                  value={slot}
+                  onChange={(e) => handleEditTimeSlot(index, e.target.value)}
+                  className="w-16 text-center text-xs bg-transparent border-none outline-none font-semibold text-zinc-800 dark:text-zinc-200 focus:ring-1 focus:ring-indigo-500/30 rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTimeSlot(index)}
+                  className="text-red-500 hover:text-red-650 p-0.5 rounded transition-colors"
+                  title="Delete slot"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-505 mt-2 leading-relaxed">
+            * Note: Removing a time slot will shift all classes for that day. Remember to click "Save" above to apply your changes.
+          </p>
         </div>
 
         {/* Editor Grid */}

@@ -67,6 +67,26 @@ export default function AdminFormDrawer({ isOpen, onClose, onSubmit, title, fiel
     });
   }
 
+  function handleAddAttachment(fieldKey) {
+    const arr = formData[fieldKey] || [];
+    handleChange(fieldKey, [
+      ...arr,
+      { type: "upload", name: "", file: null, url: "" }
+    ]);
+  }
+
+  function handleUpdateAttachment(fieldKey, index, key, value) {
+    const arr = [...(formData[fieldKey] || [])];
+    arr[index] = { ...arr[index], [key]: value };
+    handleChange(fieldKey, arr);
+  }
+
+  function handleRemoveAttachment(fieldKey, index) {
+    const arr = [...(formData[fieldKey] || [])];
+    arr.splice(index, 1);
+    handleChange(fieldKey, arr);
+  }
+
   return (
     <>
       {/* Overlay */}
@@ -178,6 +198,96 @@ export default function AdminFormDrawer({ isOpen, onClose, onSubmit, title, fiel
                     <span className="text-xs text-zinc-500 dark:text-zinc-500 truncate max-w-[150px]">
                       {formData[field.key]?.name || formData[field.key]}
                     </span>
+                  )}
+                </div>
+              ) : field.type === "attachments" ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                      Attachments List
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddAttachment(field.key)}
+                      className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      + Add Attachment
+                    </button>
+                  </div>
+                  
+                  {(formData[field.key] || []).length === 0 ? (
+                    <div className="text-center py-4 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg text-xs text-zinc-400 dark:text-zinc-650">
+                      No attachments added yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(formData[field.key] || []).map((att, index) => (
+                        <div
+                          key={index}
+                          className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 space-y-2 relative group"
+                        >
+                          <div className="flex items-center gap-2 justify-between">
+                            <select
+                              value={att.type || "upload"}
+                              onChange={(e) => handleUpdateAttachment(field.key, index, "type", e.target.value)}
+                              className="text-[10px] font-semibold bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                            >
+                              <option value="upload">File Upload</option>
+                              <option value="link">Web Link</option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAttachment(field.key, index)}
+                              className="text-red-500 hover:text-red-600 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+
+                          <input
+                            type="text"
+                            value={att.name || ""}
+                            onChange={(e) => handleUpdateAttachment(field.key, index, "name", e.target.value)}
+                            placeholder="Label/Name (e.g. Lab sheet)"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
+                          />
+
+                          {att.type === "link" ? (
+                            <input
+                              type="text"
+                              value={att.url || ""}
+                              onChange={(e) => handleUpdateAttachment(field.key, index, "url", e.target.value)}
+                              placeholder="Link URL (https://...)"
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1.5 px-2 py-1 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[11px] text-zinc-500 dark:text-zinc-400 hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-colors">
+                                <Upload size={10} />
+                                <span>Choose File</span>
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleUpdateAttachment(field.key, index, "file", file);
+                                      if (!att.name) {
+                                        handleUpdateAttachment(field.key, index, "name", file.name);
+                                      }
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <span className="text-[10px] text-zinc-400 dark:text-zinc-600 truncate max-w-[150px]">
+                                {att.file?.name || (att.url ? att.url.split("/").pop().split("?")[0] : "No file")}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               ) : (

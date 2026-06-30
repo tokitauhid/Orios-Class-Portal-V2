@@ -96,14 +96,18 @@ async function migrate() {
 
     // 4. Migrate Notes
     console.log("📝 Migrating notes...");
-    const notesToInsert = mockNotes.map((n) => ({
-      id: n.id,
-      title: n.title,
-      description: n.description || "",
-      subject_id: n.subjectId,
-      type: n.type,
-      url: n.url || "https://example.com/mock-file.pdf",
-    }));
+    const notesToInsert = mockNotes.map((n) => {
+      const url = n.url || "https://example.com/mock-file.pdf";
+      return {
+        id: n.id,
+        title: n.title,
+        description: n.description || "",
+        subject_id: n.subjectId,
+        type: n.type,
+        url: url,
+        attachments: [{ name: n.title, url, type: n.type }],
+      };
+    });
     const { error: notesErr } = await supabase
       .from("notes")
       .upsert(notesToInsert, { onConflict: "id" });
@@ -160,20 +164,37 @@ async function migrate() {
 
     // 7. Migrate Files
     console.log("📁 Migrating files list...");
-    const filesToInsert = mockFiles.map((f) => ({
-      id: f.id,
-      name: f.name,
-      subject_id: f.subjectId,
-      type: f.type,
-      size: f.size,
-      uploaded_by: f.uploadedBy,
-      url: f.url || "https://example.com/mock-file.pdf",
-    }));
+    const filesToInsert = mockFiles.map((f) => {
+      const url = f.url || "https://example.com/mock-file.pdf";
+      return {
+        id: f.id,
+        name: f.name,
+        subject_id: f.subjectId,
+        type: f.type,
+        size: f.size,
+        uploaded_by: f.uploadedBy,
+        url: url,
+        attachments: [{ name: f.name, url, type: f.type }],
+      };
+    });
     const { error: filesErr } = await supabase
       .from("files")
       .upsert(filesToInsert, { onConflict: "id" });
     if (filesErr) throw filesErr;
     console.log("✅ Files migrated successfully.");
+
+    // 7.5 Migrate Time Slots
+    console.log("⏰ Migrating default time slots...");
+    const defaultTimeSlots = ["8:00", "9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00"];
+    const slotsToInsert = defaultTimeSlots.map((slot, index) => ({
+      time_label: slot,
+      sort_order: index,
+    }));
+    const { error: slotsErr } = await supabase
+      .from("time_slots")
+      .upsert(slotsToInsert, { onConflict: "sort_order" });
+    if (slotsErr) throw slotsErr;
+    console.log("✅ Time slots migrated successfully.");
 
     // 8. Migrate Routine
     console.log("🗓️ Migrating routine slots...");

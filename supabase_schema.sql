@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS public.notes (
   subject_id TEXT REFERENCES public.subjects(id) ON DELETE CASCADE NOT NULL,
   type TEXT NOT NULL, -- 'pdf', 'doc', 'pptx', 'zip', 'code', 'image', 'link'
   url TEXT NOT NULL, -- Storage URL or external resource link
+  attachments JSONB DEFAULT '[]'::jsonb, -- Array of attachments: {name, url, type}
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS public.assignments (
   due_date TIMESTAMP WITH TIME ZONE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending', 'submitted')) DEFAULT 'pending',
   file_url TEXT, -- Link to attached document (optional)
+  attachments JSONB DEFAULT '[]'::jsonb, -- Array of attachments: {name, url, type}
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -86,6 +88,7 @@ CREATE TABLE IF NOT EXISTS public.lab_reports (
   due_date TIMESTAMP WITH TIME ZONE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending', 'submitted')) DEFAULT 'pending',
   file_url TEXT, -- Link to attached document (optional)
+  attachments JSONB DEFAULT '[]'::jsonb, -- Array of attachments: {name, url, type}
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -100,6 +103,7 @@ CREATE TABLE IF NOT EXISTS public.files (
   size TEXT NOT NULL, -- e.g. '2.4 MB'
   uploaded_by TEXT NOT NULL,
   url TEXT NOT NULL, -- Supabase Storage URL
+  attachments JSONB DEFAULT '[]'::jsonb, -- Array of attachments: {name, url, type}
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -108,7 +112,7 @@ ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;
 -- ─── 9. ROUTINE TABLE ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.routine (
   day_name TEXT NOT NULL CHECK (day_name IN ('Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')),
-  time_slot_index INTEGER NOT NULL CHECK (time_slot_index >= 0 AND time_slot_index < 8),
+  time_slot_index INTEGER NOT NULL CHECK (time_slot_index >= 0),
   subject_id TEXT REFERENCES public.subjects(id) ON DELETE SET NULL,
   teacher_id INTEGER REFERENCES public.teachers(id) ON DELETE SET NULL,
   room TEXT,
@@ -117,6 +121,16 @@ CREATE TABLE IF NOT EXISTS public.routine (
 );
 
 ALTER TABLE public.routine ENABLE ROW LEVEL SECURITY;
+
+-- ─── 9b. TIME_SLOTS TABLE ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.time_slots (
+  id SERIAL PRIMARY KEY,
+  time_label TEXT NOT NULL,
+  sort_order INTEGER NOT NULL UNIQUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.time_slots ENABLE ROW LEVEL SECURITY;
 
 -- ─── ROW LEVEL SECURITY POLICIES ─────────────────────────────────────────────
 
@@ -166,6 +180,10 @@ CREATE POLICY "Allow admin write access for files" ON public.files FOR ALL TO au
 -- 9. Routine Policies
 CREATE POLICY "Allow public read access for routine" ON public.routine FOR SELECT USING (true);
 CREATE POLICY "Allow admin write access for routine" ON public.routine FOR ALL TO authenticated USING (public.is_admin());
+
+-- 9b. Time Slots Policies
+CREATE POLICY "Allow public read access for time_slots" ON public.time_slots FOR SELECT USING (true);
+CREATE POLICY "Allow admin write access for time_slots" ON public.time_slots FOR ALL TO authenticated USING (public.is_admin());
 
 
 -- ─── AUTHENTICATION SIGNUP TRIGGER ──────────────────────────────────────────
@@ -369,5 +387,17 @@ ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public read access for exams" ON public.exams FOR SELECT USING (true);
 CREATE POLICY "Allow admin write access for exams" ON public.exams FOR ALL TO authenticated USING (public.is_admin());
+
+-- 12. Time Slots Seeding
+INSERT INTO public.time_slots (time_label, sort_order) VALUES
+('8:00', 0),
+('9:00', 1),
+('10:00', 2),
+('11:00', 3),
+('12:00', 4),
+('1:00', 5),
+('2:00', 6),
+('3:00', 7)
+ON CONFLICT (sort_order) DO UPDATE SET time_label = EXCLUDED.time_label;
 
 
