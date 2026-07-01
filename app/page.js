@@ -6,7 +6,7 @@ import StatCard from "@/components/StatCard";
 import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
 import { createClient } from "@/lib/supabase/client";
-import { getTodayClasses } from "@/lib/schedule-helpers";
+import { getTodayClasses, timeToMinutes } from "@/lib/schedule-helpers";
 import { triggerDownload } from "@/lib/download";
 import {
   BookOpen,
@@ -233,6 +233,21 @@ export default function HomePage() {
     if (loading) return [];
     return getTodayClasses(weeklyRoutine);
   }, [loading, weeklyRoutine]);
+
+  const currentSlotTime = useMemo(() => {
+    if (loading) return null;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (const cls of todayClasses) {
+      const startMin = timeToMinutes(cls.time);
+      const endMin = startMin + 60;
+      if (nowMinutes >= startMin && nowMinutes < endMin) {
+        return cls.time;
+      }
+    }
+    return null;
+  }, [loading, todayClasses]);
 
   if (loading || subjectsLoading) {
     return (
@@ -466,6 +481,7 @@ export default function HomePage() {
               <div>
                 {todayClasses.map((cls, index) => {
                   const subject = getSubject(cls.subjectId);
+                  const isNow = currentSlotTime === cls.time;
                   return (
                     <ScheduleCard
                       key={`${cls.subjectId}-${index}`}
@@ -474,6 +490,7 @@ export default function HomePage() {
                       teacher={cls.teacher}
                       room={cls.room}
                       type={cls.type}
+                      isNow={isNow}
                     />
                   );
                 })}

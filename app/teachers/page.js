@@ -129,30 +129,40 @@ export default function TeachersPage() {
                 </div>
 
                 {/* Details */}
-                <div className="px-4 pb-3 grid grid-cols-1 md:grid-cols-2 gap-1.5">
-                  <a
-                    href={`mailto:${teacher.email}`}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
-                  >
-                    <Mail size={13} className="text-zinc-400 dark:text-zinc-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{teacher.email}</span>
-                  </a>
-                  <a
-                    href={`tel:${teacher.phone}`}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
-                  >
-                    <Phone size={13} className="text-zinc-400 dark:text-zinc-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400">{teacher.phone}</span>
-                  </a>
-                  <div className="flex items-center gap-2 px-2.5 py-1.5">
-                    <MapPin size={13} className="text-zinc-400 dark:text-zinc-600 shrink-0" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{teacher.room}</span>
+                {(teacher.email || teacher.phone || teacher.room || teacher.officeHours) && (
+                  <div className="px-4 pb-3 grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                    {teacher.email && (
+                      <a
+                        href={`mailto:${teacher.email}`}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <Mail size={13} className="text-zinc-400 dark:text-zinc-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{teacher.email}</span>
+                      </a>
+                    )}
+                    {teacher.phone && (
+                      <a
+                        href={`tel:${teacher.phone}`}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <Phone size={13} className="text-zinc-400 dark:text-zinc-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400">{teacher.phone}</span>
+                      </a>
+                    )}
+                    {teacher.room && (
+                      <div className="flex items-center gap-2 px-2.5 py-1.5">
+                        <MapPin size={13} className="text-zinc-400 dark:text-zinc-600 shrink-0" />
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{teacher.room}</span>
+                      </div>
+                    )}
+                    {teacher.officeHours && (
+                      <div className="flex items-center gap-2 px-2.5 py-1.5">
+                        <Clock size={13} className="text-zinc-400 dark:text-zinc-600 shrink-0" />
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400">{teacher.officeHours}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 px-2.5 py-1.5">
-                    <Clock size={13} className="text-zinc-400 dark:text-zinc-600 shrink-0" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400">{teacher.officeHours}</span>
-                  </div>
-                </div>
+                )}
               </div>
             );
           })}
