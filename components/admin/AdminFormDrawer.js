@@ -68,23 +68,36 @@ export default function AdminFormDrawer({ isOpen, onClose, onSubmit, title, fiel
   }
 
   function handleAddAttachment(fieldKey) {
-    const arr = formData[fieldKey] || [];
-    handleChange(fieldKey, [
-      ...arr,
-      { type: "upload", name: "", file: null, url: "" }
-    ]);
+    setFormData((prev) => {
+      const arr = prev[fieldKey] || [];
+      return {
+        ...prev,
+        [fieldKey]: [
+          ...arr,
+          { type: "upload", name: "", file: null, url: "" }
+        ]
+      };
+    });
   }
 
-  function handleUpdateAttachment(fieldKey, index, key, value) {
-    const arr = [...(formData[fieldKey] || [])];
-    arr[index] = { ...arr[index], [key]: value };
-    handleChange(fieldKey, arr);
+  function handleUpdateAttachment(fieldKey, index, keyOrUpdates, value) {
+    setFormData((prev) => {
+      const arr = [...(prev[fieldKey] || [])];
+      if (typeof keyOrUpdates === "object" && keyOrUpdates !== null) {
+        arr[index] = { ...arr[index], ...keyOrUpdates };
+      } else {
+        arr[index] = { ...arr[index], [keyOrUpdates]: value };
+      }
+      return { ...prev, [fieldKey]: arr };
+    });
   }
 
   function handleRemoveAttachment(fieldKey, index) {
-    const arr = [...(formData[fieldKey] || [])];
-    arr.splice(index, 1);
-    handleChange(fieldKey, arr);
+    setFormData((prev) => {
+      const arr = [...(prev[fieldKey] || [])];
+      arr.splice(index, 1);
+      return { ...prev, [fieldKey]: arr };
+    });
   }
 
   return (
@@ -272,10 +285,11 @@ export default function AdminFormDrawer({ isOpen, onClose, onSubmit, title, fiel
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                      handleUpdateAttachment(field.key, index, "file", file);
+                                      const updates = { file };
                                       if (!att.name) {
-                                        handleUpdateAttachment(field.key, index, "name", file.name);
+                                        updates.name = file.name;
                                       }
+                                      handleUpdateAttachment(field.key, index, updates);
                                     }
                                   }}
                                 />
