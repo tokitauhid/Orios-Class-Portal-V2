@@ -19,7 +19,6 @@ import {
   AlertCircle,
   User,
   HardDrive,
-  Info,
 } from "lucide-react";
 
 /**
@@ -107,32 +106,32 @@ const categoryConfig = {
   assignment: {
     label: "Assignment",
     icon: ClipboardList,
-    badge: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-500/20",
+    badge: "bg-amber-100 text-amber-900 dark:bg-amber-500/25 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 font-bold",
   },
   lab: {
     label: "Lab Report",
     icon: FlaskConical,
-    badge: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20",
+    badge: "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/25 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 font-bold",
   },
   exam: {
     label: "Exam",
     icon: BookOpen,
-    badge: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-500/20",
+    badge: "bg-rose-100 text-rose-900 dark:bg-rose-500/25 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40 font-bold",
   },
   note: {
     label: "Note",
     icon: FileText,
-    badge: "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-500/20",
+    badge: "bg-indigo-100 text-indigo-900 dark:bg-indigo-500/25 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 font-bold",
   },
   file: {
     label: "File",
     icon: FolderOpen,
-    badge: "bg-violet-100 dark:bg-violet-500/15 text-violet-700 dark:text-violet-400 border border-violet-200/60 dark:border-violet-500/20",
+    badge: "bg-violet-100 text-violet-900 dark:bg-violet-500/25 dark:text-violet-300 border border-violet-300 dark:border-violet-500/40 font-bold",
   },
   resource: {
     label: "Resource",
     icon: FileText,
-    badge: "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700",
+    badge: "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 font-bold",
   },
 };
 
@@ -140,17 +139,17 @@ const statusBadgeConfig = {
   pending: {
     label: "Pending",
     icon: Clock,
-    badge: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-500/20",
+    badge: "bg-amber-100 text-amber-900 dark:bg-amber-500/25 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 font-bold",
   },
   overdue: {
     label: "Overdue",
     icon: AlertCircle,
-    badge: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-500/20",
+    badge: "bg-rose-100 text-rose-900 dark:bg-rose-500/25 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40 font-bold",
   },
   submitted: {
     label: "Submitted",
     icon: CheckCircle2,
-    badge: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20",
+    badge: "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/25 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 font-bold",
   },
 };
 
@@ -187,10 +186,36 @@ function getRelativeDateLabel(dateStr, isExam = false) {
 }
 
 /**
+ * Renders text with clickable, high-visibility styled URLs.
+ */
+function renderFormattedDescription(text) {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 dark:text-indigo-400 font-semibold underline underline-offset-2 hover:text-indigo-500 dark:hover:text-indigo-300 break-all transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
+/**
  * Universal ResourceDetailModal
  *
- * Provides a rich, non-truncated detail view for any assignment, lab report, note, exam, or file.
- * Includes clear metadata, full title & description, and an explicit download action when files exist.
+ * Provides a high-contrast, crystal-clear detail view for any assignment, lab report, note, exam, or file.
+ * Features maximum readability in both light and dark themes with zero truncated text.
  */
 export default function ResourceDetailModal({ isOpen, onClose, item }) {
   const { getSubject, getColor } = useSubjectColors();
@@ -261,23 +286,23 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-zinc-950/60 dark:bg-zinc-950/80 backdrop-blur-sm transition-opacity duration-200 animate-fade-in"
+        className="fixed inset-0 bg-zinc-950/70 dark:bg-zinc-950/85 backdrop-blur-sm transition-opacity duration-200 animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Surface */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto animate-scale-in"
+        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto animate-scale-in"
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex flex-wrap items-center gap-2">
             {/* Category Badge */}
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cat.badge}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cat.badge}`}
             >
-              <CategoryIcon size={13} strokeWidth={2} />
+              <CategoryIcon size={14} strokeWidth={2.2} />
               {normalized.category === "lab" && normalized.labNumber
                 ? `Lab ${normalized.labNumber}`
                 : cat.label}
@@ -286,7 +311,7 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
             {/* Subject Badge */}
             {subject && subjectColors && (
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${subjectColors.border} ${subjectColors.bg} ${subjectColors.text}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${subjectColors.border} ${subjectColors.bg} ${subjectColors.text}`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${subjectColors.dot}`} />
                 {subject.code}
@@ -296,7 +321,7 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
             {/* Status Badge */}
             {statusConfig && (
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider ${statusConfig.badge}`}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusConfig.badge}`}
               >
                 {statusConfig.label}
               </span>
@@ -308,9 +333,9 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="p-1.5 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
           >
-            <X size={18} />
+            <X size={18} strokeWidth={2.2} />
           </button>
         </div>
 
@@ -320,12 +345,12 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
           <div>
             <h2
               id="resource-detail-title"
-              className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-snug break-words"
+              className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 tracking-tight leading-snug break-words"
             >
               {normalized.title}
             </h2>
             {subject && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300 mt-1">
                 {subject.name}
               </p>
             )}
@@ -333,14 +358,14 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
 
           {/* Metadata Grid */}
           {(formattedDate || normalized.size || normalized.uploadedBy) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/60 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl bg-zinc-100/90 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 text-xs">
               {formattedDate && (
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
-                  <Calendar size={14} className="text-zinc-400 dark:text-zinc-500 shrink-0" />
+                <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                  <Calendar size={15} className="text-zinc-500 dark:text-zinc-400 shrink-0" />
                   <div className="min-w-0">
-                    <span className="font-medium">{formattedDate}</span>
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{formattedDate}</span>
                     {relativeDate && (
-                      <span className="ml-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+                      <span className="ml-1.5 font-bold text-indigo-600 dark:text-indigo-400">
                         ({relativeDate})
                       </span>
                     )}
@@ -349,16 +374,16 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
               )}
 
               {normalized.size && (
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
-                  <HardDrive size={14} className="text-zinc-400 dark:text-zinc-500 shrink-0" />
-                  <span>Size: {normalized.size}</span>
+                <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                  <HardDrive size={15} className="text-zinc-500 dark:text-zinc-400 shrink-0" />
+                  <span className="font-medium">Size: <strong className="font-semibold text-zinc-900 dark:text-zinc-100">{normalized.size}</strong></span>
                 </div>
               )}
 
               {normalized.uploadedBy && (
-                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
-                  <User size={14} className="text-zinc-400 dark:text-zinc-500 shrink-0" />
-                  <span className="truncate">By {normalized.uploadedBy}</span>
+                <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
+                  <User size={15} className="text-zinc-500 dark:text-zinc-400 shrink-0" />
+                  <span className="font-medium truncate">By <strong className="font-semibold text-zinc-900 dark:text-zinc-100">{normalized.uploadedBy}</strong></span>
                 </div>
               )}
             </div>
@@ -366,15 +391,15 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
 
           {/* Full Description (Never truncated) */}
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200 mb-2">
               Description & Details
             </h4>
             {normalized.description ? (
-              <div className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap break-words bg-zinc-50/70 dark:bg-zinc-850/50 p-3.5 rounded-xl border border-zinc-200/70 dark:border-zinc-800/60">
-                {normalized.description}
+              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-relaxed whitespace-pre-wrap break-words bg-zinc-100/90 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 p-4 rounded-xl shadow-xs">
+                {renderFormattedDescription(normalized.description)}
               </div>
             ) : (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 italic p-3 rounded-xl bg-zinc-50/50 dark:bg-zinc-850/30 border border-dashed border-zinc-200 dark:border-zinc-800">
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 italic p-3.5 rounded-xl bg-zinc-100/60 dark:bg-zinc-800/50 border border-dashed border-zinc-300 dark:border-zinc-700">
                 No description provided.
               </p>
             )}
@@ -382,7 +407,7 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
 
           {/* Attachments & Explicit Download Action */}
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200 mb-2">
               Files & Attachments
             </h4>
 
@@ -393,21 +418,21 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
                   return (
                     <div
                       key={att.id}
-                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-750 hover:border-indigo-300 dark:hover:border-indigo-600/50 transition-colors shadow-xs"
+                      className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-zinc-100/90 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors shadow-xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 flex items-center justify-center shrink-0">
                           {att.isLink ? (
-                            <ExternalLink size={16} strokeWidth={2} />
+                            <ExternalLink size={17} strokeWidth={2} />
                           ) : (
-                            <FileText size={16} strokeWidth={2} />
+                            <FileText size={17} strokeWidth={2} />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-100 break-words leading-tight">
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 break-words leading-tight">
                             {att.name}
                           </p>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
                             {att.isLink ? "External web resource" : "Downloadable file"}
                           </p>
                         </div>
@@ -417,20 +442,20 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
                         type="button"
                         onClick={() => handleDownload(att)}
                         disabled={isDownloading}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition-all duration-150 ${
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shrink-0 transition-all duration-150 cursor-pointer ${
                           att.isLink
-                            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                            : "bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-xs active:scale-95"
+                            ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 border border-zinc-300 dark:border-zinc-600"
+                            : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm active:scale-95"
                         }`}
                       >
                         {att.isLink ? (
                           <>
-                            <ExternalLink size={13} />
+                            <ExternalLink size={14} />
                             <span>Open</span>
                           </>
                         ) : (
                           <>
-                            <Download size={13} />
+                            <Download size={14} />
                             <span>{isDownloading ? "Starting..." : "Download"}</span>
                           </>
                         )}
@@ -441,15 +466,15 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
               </div>
             ) : (
               /* Clear indication when no file exists - does not make tap appear broken */
-              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-zinc-400 dark:text-zinc-500">
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-zinc-100/90 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs">
+                <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0 text-zinc-600 dark:text-zinc-300">
                   <Paperclip size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-zinc-700 dark:text-zinc-300">
+                  <p className="font-bold text-zinc-900 dark:text-zinc-100">
                     No file attached
                   </p>
-                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
                     This item has no attached documents or external download links.
                   </p>
                 </div>
@@ -459,11 +484,11 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/90">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-zinc-300 dark:border-zinc-700"
           >
             Close
           </button>
@@ -472,4 +497,3 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
     </div>
   );
 }
-
