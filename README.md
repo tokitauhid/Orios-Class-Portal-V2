@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15.x-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Next.js-16.x-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-4.0-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
   <img src="https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
@@ -25,7 +25,7 @@
 
 ## 🌟 Introduction
 
-**Orios Portal V2** is a fast, light, and modern class management app. Transitioned from a bloated Docusaurus site to a flat, mobile-first **Next.js 15 (App Router)** setup, it connects directly to a **Supabase (PostgreSQL)** backend and is optimized to run at the edge on **Cloudflare Workers / Pages**.
+**Orios Portal V2** is a fast, light, and modern class management app. Built on a flat, mobile-first **Next.js 16 (App Router)** setup with Turbopack, it connects directly to a **Supabase (PostgreSQL)** backend and is optimized to run at the edge on **Cloudflare Workers / Pages**.
 
 It features a "Quiet Premium" aesthetic — a dark-first, minimal UI built on a zinc palette with subtle indigo accents, smooth micro-animations, and full offline-ready structure.
 
@@ -50,7 +50,7 @@ It features a "Quiet Premium" aesthetic — a dark-first, minimal UI built on a 
 
 ## ⚙️ Architecture & Tech Stack
 
-- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/) for optimized static generation, route handlers, and middleware.
+- **Framework**: [Next.js 16 (App Router)](https://nextjs.org/) for optimized static generation, route handlers, and middleware.
 - **Frontend**: [React 19](https://react.dev/) & [Tailwind CSS v4](https://tailwindcss.com/) for fluid, utility-driven responsive design.
 - **Database**: [Supabase PostgreSQL](https://supabase.com/) for structured data storage with Row-Level Security (RLS).
 - **Authentication**: Supabase Auth integrated with custom triggers to provision user roles.
@@ -116,14 +116,24 @@ Orios-V2/
 
 ## 🚀 Quick Start
 
-### 1. Clone & Install
+### 1. Prerequisites
+- **Node.js**: Recommended `v20.x` or `v22.x` LTS.
+- **npm**: `v10.x` or later.
+
+### 2. Clone & Install
 ```bash
-git clone https://github.com/tokitauhid/Orios-V2.git
-cd Orios-V2
+git clone https://github.com/tokitauhid/Orios-Class-Portal-V2.git
+cd Orios-Class-Portal-V2
 npm install
 ```
 
-### 2. Configure Environment Variables
+> [!TIP]
+> If you are running cutting-edge Node versions (e.g. Node 24+/25+) and encounter a native `sharp` compilation error during install, run:
+> ```bash
+> npm install --ignore-scripts
+> ```
+
+### 3. Configure Environment Variables
 Copy `.env.example` to `.env.local`:
 ```bash
 cp .env.example .env.local
@@ -135,11 +145,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-private-service-role-key-for-seeding
 ```
 
-### 3. Initialize the Database
+### 4. Initialize the Database
 1. Go to your **Supabase Dashboard** -> **SQL Editor**.
-2. Copy the contents of [`supabase_schema.sql`](file:///home/tokit/Projects/Orios-V2/supabase_schema.sql) and execute the query to set up tables, RLS policies, storage bucket configurations, and authentication triggers.
+2. Copy the contents of [`supabase_schema.sql`](file:///home/tokit/Projects/Orios-Class-Portal-V2/supabase_schema.sql) and execute the query to set up tables, RLS policies, storage bucket configurations, and authentication triggers.
 
-### 4. Database Commands
+### 5. Database Commands
 We provide pre-configured scripts in `package.json` to manage your data:
 
 - **Seed Mock Data**: Populates your database with default subjects, teachers, notes, files, assignments, and routine slots.
@@ -154,7 +164,7 @@ We provide pre-configured scripts in `package.json` to manage your data:
   npm run db:clean
   ```
 
-### 5. Run Locally
+### 6. Run Locally
 Start the local Next.js development server:
 ```bash
 npm run dev
@@ -163,12 +173,18 @@ Open [http://localhost:3000](http://localhost:3000) to view the portal.
 
 ---
 
-## ☁️ Deployment (Cloudflare)
+## ☁️ Building & Deployment
 
-This application is configured for deployment to **Cloudflare Pages** using `@opennextjs/cloudflare`.
+This application supports both standard Next.js local builds and edge deployment to **Cloudflare Pages / Workers** via `@opennextjs/cloudflare`.
 
-### Build
-Generate the production-ready OpenNext build:
+### Local Next.js Build
+To verify the application builds cleanly without bundling Cloudflare workers:
+```bash
+npm run build:next
+```
+
+### Cloudflare Production Build
+To generate the production-ready OpenNext Cloudflare bundle:
 ```bash
 npm run build
 ```

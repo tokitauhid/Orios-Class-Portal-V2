@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import ScheduleCard from "@/components/ScheduleCard";
+import ResourceDetailModal from "@/components/ResourceDetailModal";
 import { useSubjectColors } from "@/lib/SubjectContext";
 import {
   getClassesForDay,
@@ -11,7 +12,6 @@ import {
   timeToMinutes,
 } from "@/lib/schedule-helpers";
 import { ClipboardList, FlaskConical, ArrowRight, BookOpen } from "lucide-react";
-import { triggerDownload } from "@/lib/download";
 
 /**
  * DayView — Daily planner hub.
@@ -25,6 +25,7 @@ export default function DayView({
   labReports = [],
   exams = [],
 }) {
+  const [selectedItem, setSelectedItem] = useState(null);
   const { getColor, getSubject } = useSubjectColors();
   const todayName = getTodayName();
 
@@ -147,19 +148,13 @@ export default function DayView({
             {examsToday.map((exam) => {
               const subject = getSubject(exam.subjectId);
               const colors = getColor(exam.subjectId);
-              const hasFile = !!exam.fileUrl;
 
               return (
                 <div
                   key={`exam-${exam.id}`}
-                  onClick={() => {
-                    if (hasFile) {
-                      triggerDownload(exam.fileUrl, exam.resourceTitle || exam.title);
-                    }
-                  }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl bg-red-500/[0.03] dark:bg-red-500/[0.02] border border-red-500/10 dark:border-red-500/10 hover:border-red-500/20 dark:hover:border-red-500/20 ${
-                    hasFile ? "cursor-pointer active:scale-[0.99]" : ""
-                  } transition-all duration-150 group`}
+                  onClick={() => setSelectedItem({ ...exam, type: "exam" })}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-red-500/[0.03] dark:bg-red-500/[0.02] border border-red-500/10 dark:border-red-500/10 hover:border-red-500/20 dark:hover:border-red-500/20 cursor-pointer active:scale-[0.99] transition-all duration-150 group"
+                  title={exam.title}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${colors.bg}`}>
                     <BookOpen size={14} strokeWidth={1.8} className={colors.text} />
@@ -173,7 +168,6 @@ export default function DayView({
                         {subject ? subject.code : exam.subjectId}
                       </span>
                       {exam.description && ` · ${exam.description}`}
-                      {hasFile && " · 📄 Click to download study resource"}
                     </p>
                   </div>
                 </div>
@@ -216,7 +210,7 @@ export default function DayView({
         </div>
       </section>
 
-      {/* ── Section 2: Due Today ── */}
+      {/* ── Section 2: Items Due Today ── */}
       {dueToday.length > 0 && (
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-600 mb-3">
@@ -232,13 +226,15 @@ export default function DayView({
               return (
                 <div
                   key={`${item._type}-${item.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-150"
+                  onClick={() => setSelectedItem({ ...item, type: item._type })}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-150 cursor-pointer group"
+                  title={item.title}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${colors.bg}`}>
                     <Icon size={14} strokeWidth={1.8} className={colors.text} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {item.title}
                     </h4>
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
@@ -280,25 +276,19 @@ export default function DayView({
               const typeLabel = isExam ? "Exam" : item._type === "lab" ? "Lab Report" : "Assignment";
               const dueDate = new Date(item.dueDate);
               const daysLeft = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
-              const hasFile = isExam && !!item.fileUrl;
 
               return (
                 <div
                   key={`upcoming-${item._type}-${item.id}`}
-                  onClick={() => {
-                    if (hasFile) {
-                      triggerDownload(item.fileUrl, item.resourceTitle || item.title);
-                    }
-                  }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-150 ${
-                    hasFile ? "cursor-pointer active:scale-[0.99]" : ""
-                  }`}
+                  onClick={() => setSelectedItem({ ...item, type: item._type })}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-150 cursor-pointer group"
+                  title={item.title}
                 >
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${colors.bg}`}>
                     <Icon size={14} strokeWidth={1.8} className={colors.text} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {item.title}
                     </h4>
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
@@ -306,7 +296,6 @@ export default function DayView({
                         {subject ? subject.code : item.subjectId}
                       </span>
                       {" · "}{typeLabel}
-                      {hasFile && " · 📄 Click to download study resource"}
                     </p>
                   </div>
                   <span className={`shrink-0 text-[10px] font-medium ${
@@ -320,6 +309,13 @@ export default function DayView({
           </div>
         </section>
       )}
+
+      {/* Detail Modal */}
+      <ResourceDetailModal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        item={selectedItem}
+      />
     </div>
   );
 }

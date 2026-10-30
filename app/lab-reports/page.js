@@ -9,6 +9,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import { triggerDownload } from "@/lib/download";
+import ResourceDetailModal from "@/components/ResourceDetailModal";
 
 const statusConfig = {
   pending: {
@@ -35,6 +36,7 @@ export default function LabReportsPage() {
   const [activeSubject, setActiveSubject] = useState("all");
   const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [labReports, setLabReports] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -203,22 +205,14 @@ export default function LabReportsPage() {
               });
 
               const handleCardClick = () => {
-                if (report.attachments && report.attachments.length > 0) {
-                  triggerDownload(report.attachments[0].url, report.attachments[0].name);
-                } else if (report.file) {
-                  triggerDownload(report.file, report.title);
-                }
+                setSelectedItem({ ...report, type: "lab", category: "lab" });
               };
-
-              const hasFile = (report.attachments && report.attachments.length > 0) || !!report.file;
 
               return (
                 <div
                   key={report.id}
                   onClick={handleCardClick}
-                  className={`flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 ${
-                    hasFile ? "cursor-pointer group" : ""
-                  }`}
+                  className="flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
                 >
                   {/* Lab number badge */}
                   <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 shrink-0 mt-0.5">
@@ -228,7 +222,10 @@ export default function LabReportsPage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${hasFile ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
+                      <h3
+                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+                        title={report.title}
+                      >
                         {report.title}
                       </h3>
                       <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${config.badge}`}>
@@ -245,7 +242,7 @@ export default function LabReportsPage() {
                           <button
                             key={idx}
                             onClick={() => triggerDownload(att.url, att.name)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-zinc-200/60 dark:border-zinc-850 font-medium"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-zinc-200/60 dark:border-zinc-700 font-medium"
                           >
                             <Paperclip size={8} className="shrink-0" />
                             <span className="truncate max-w-[120px]">{att.name}</span>
@@ -282,6 +279,13 @@ export default function LabReportsPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      <ResourceDetailModal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        item={selectedItem}
+      />
     </div>
   );
 }

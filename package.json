@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npx @opennextjs/cloudflare@latest build --skipBuild",
-    "deploy": "npx @opennextjs/cloudflare@latest deploy",
-    "preview": "npx @opennextjs/cloudflare@latest build --skipBuild && npx @opennextjs/cloudflare@latest preview",
+    "build": "next build && npx -y @opennextjs/cloudflare@latest build --skipBuild",
+    "build:next": "next build",
+    "deploy": "npx -y @opennextjs/cloudflare@latest deploy",
+    "preview": "npx -y @opennextjs/cloudflare@latest build --skipBuild && npx -y @opennextjs/cloudflare@latest preview",
     "start": "next start",
     "lint": "eslint",
     "db:clean": "node scripts/clear-db.mjs",
