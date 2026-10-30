@@ -61,7 +61,7 @@ export default function CountdownCard({ title, date, type = "exam", subject, onC
           <span className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${typeBadgeStyles[type] || ""}`}>
             {type}
           </span>
-          <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate mt-1">
+          <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate mt-1" title={title}>
             {title}
           </h3>
         </div>
@@ -94,7 +94,7 @@ export default function CountdownCard({ title, date, type = "exam", subject, onC
         </div>
 
         {/* Title */}
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 truncate">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 truncate" title={title}>
           {title}
         </h3>
         {subject && (

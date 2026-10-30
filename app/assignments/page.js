@@ -11,6 +11,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import { triggerDownload } from "@/lib/download";
+import ResourceDetailModal from "@/components/ResourceDetailModal";
 
 const statusConfig = {
   pending: {
@@ -40,6 +41,7 @@ export default function AssignmentsPage() {
   const [activeSubject, setActiveSubject] = useState("all");
   const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [assignments, setAssignments] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -206,24 +208,15 @@ export default function AssignmentsPage() {
                 day: "numeric",
               });
 
-              // Allow clicking to download/view the file if it exists
               const handleCardClick = () => {
-                if (assignment.attachments && assignment.attachments.length > 0) {
-                  triggerDownload(assignment.attachments[0].url, assignment.attachments[0].name);
-                } else if (assignment.file) {
-                  triggerDownload(assignment.file, assignment.title);
-                }
+                setSelectedItem({ ...assignment, type: "assignment" });
               };
-
-              const hasFile = (assignment.attachments && assignment.attachments.length > 0) || !!assignment.file;
 
               return (
                 <div
                   key={assignment.id}
                   onClick={handleCardClick}
-                  className={`flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 ${
-                    hasFile ? "cursor-pointer group" : ""
-                  }`}
+                  className="flex items-start gap-3 px-3 md:px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
                 >
                   {/* Status indicator */}
                   <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${config.dot}`} />
@@ -231,7 +224,10 @@ export default function AssignmentsPage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className={`text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate ${hasFile ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : ""}`}>
+                      <h3
+                        className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+                        title={assignment.title}
+                      >
                         {assignment.title}
                       </h3>
                       <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-px rounded-full ${config.badge}`}>
@@ -285,6 +281,13 @@ export default function AssignmentsPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      <ResourceDetailModal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        item={selectedItem}
+      />
     </div>
   );
 }

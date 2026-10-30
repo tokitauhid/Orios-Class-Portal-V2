@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { triggerDownload } from "@/lib/download";
+import ResourceDetailModal from "@/components/ResourceDetailModal";
 
 const fileTypeConfig = {
   pdf: { label: "PDF", icon: FileText, color: "text-red-500 dark:text-red-400" },
@@ -30,6 +31,7 @@ export default function FilesPage() {
   const [activeSubject, setActiveSubject] = useState("all");
   const { getColor, subjects, getSubject, isLoading: subjectsLoading } = useSubjectColors();
   const [files, setFiles] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -175,11 +177,7 @@ export default function FilesPage() {
               });
 
               const handleCardClick = () => {
-                if (file.attachments && file.attachments.length > 0) {
-                  handleDownload(file.attachments[0].url, file.attachments[0].name);
-                } else {
-                  handleDownload(file.url, file.name);
-                }
+                setSelectedItem({ ...file, type: file.type || "file" });
               };
 
               return (
@@ -195,7 +193,10 @@ export default function FilesPage() {
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <h3
+                      className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+                      title={file.name}
+                    >
                       {file.name}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -228,8 +229,20 @@ export default function FilesPage() {
                     ) : null}
                   </div>
 
-                  {/* Download button */}
-                  <button className="p-2 rounded-lg text-zinc-400 dark:text-zinc-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0">
+                  {/* Direct download button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (file.attachments && file.attachments.length > 0) {
+                        handleDownload(file.attachments[0].url, file.attachments[0].name);
+                      } else {
+                        handleDownload(file.url, file.name);
+                      }
+                    }}
+                    title="Download file directly"
+                    className="p-2 rounded-lg text-zinc-400 dark:text-zinc-600 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+                  >
                     <Download size={16} />
                   </button>
                 </div>
@@ -238,6 +251,13 @@ export default function FilesPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      <ResourceDetailModal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        item={selectedItem}
+      />
     </div>
   );
 }

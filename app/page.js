@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import StatCard from "@/components/StatCard";
 import CountdownCard from "@/components/CountdownCard";
 import ScheduleCard from "@/components/ScheduleCard";
+import ResourceDetailModal from "@/components/ResourceDetailModal";
 import { createClient } from "@/lib/supabase/client";
 import { getTodayClasses, timeToMinutes } from "@/lib/schedule-helpers";
 import { triggerDownload } from "@/lib/download";
@@ -30,6 +31,7 @@ export default function HomePage() {
   const [labReports, setLabReports] = useState([]);
   const [exams, setExams] = useState([]);
   const [stats, setStats] = useState({ classesToday: 0, pendingTasks: 0, upcomingEvents: 0 });
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const supabase = createClient();
 
@@ -219,6 +221,7 @@ export default function HomePage() {
     ].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return allPending.slice(0, 3).map((item) => ({
+      ...item,
       id: `${item.itemType}-${item.id}`,
       title: item.title,
       type: item.itemType,
@@ -366,10 +369,12 @@ export default function HomePage() {
                 </p>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {overdueAssignments.map((item) => (
-                    <Link
+                    <button
                       key={`assign-${item.id}`}
-                      href="/assignments"
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs"
+                      type="button"
+                      onClick={() => setSelectedItem({ ...item, type: "assignment" })}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs text-left cursor-pointer"
+                      title={item.title}
                     >
                       <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate mr-2 text-left flex-1 min-w-0">
                         {item.title} (Assignment)
@@ -377,13 +382,15 @@ export default function HomePage() {
                       <span className="text-rose-600 dark:text-rose-400 shrink-0 font-medium font-mono">
                         Overdue
                       </span>
-                    </Link>
+                    </button>
                   ))}
                   {overdueLabReports.map((item) => (
-                    <Link
+                    <button
                       key={`lab-${item.id}`}
-                      href="/lab-reports"
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs"
+                      type="button"
+                      onClick={() => setSelectedItem({ ...item, type: "lab" })}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700/50 transition-colors text-xs text-left cursor-pointer"
+                      title={item.title}
                     >
                       <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate mr-2 text-left flex-1 min-w-0">
                         {item.title} (Lab L{item.labNumber})
@@ -391,7 +398,7 @@ export default function HomePage() {
                       <span className="text-rose-600 dark:text-rose-400 shrink-0 font-medium font-mono">
                         Overdue
                       </span>
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -449,7 +456,6 @@ export default function HomePage() {
             ) : (
               upcomingCountdowns.map((item) => {
                 const subject = getSubject(item.subjectId);
-                const hasFile = !!item.fileUrl;
                 return (
                   <CountdownCard
                     key={item.id}
@@ -457,7 +463,7 @@ export default function HomePage() {
                     date={item.date}
                     type={item.type}
                     subject={subject ? subject.code : item.subjectId}
-                    onClick={hasFile ? () => triggerDownload(item.fileUrl, item.resourceTitle) : undefined}
+                    onClick={() => setSelectedItem(item)}
                   />
                 );
               })
@@ -469,7 +475,7 @@ export default function HomePage() {
         <section className="animate-fade-in-up delay-6">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Today's Schedule
+              {"Today's Schedule"}
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">
               {todayDate}
@@ -513,6 +519,13 @@ export default function HomePage() {
           </div>
         </footer>
       </div>
+
+      {/* Resource Detail Modal */}
+      <ResourceDetailModal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        item={selectedItem}
+      />
     </div>
   );
 }
