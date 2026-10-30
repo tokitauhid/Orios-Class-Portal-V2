@@ -27,26 +27,66 @@ import {
 function normalizeItem(item) {
   if (!item) return null;
 
-  const rawType = (item.type || item.itemType || item._type || "").toLowerCase();
+  const rawType = (
+    item.category ||
+    item.type ||
+    item.itemType ||
+    item._type ||
+    ""
+  ).toLowerCase();
 
   let category = "resource";
-  if (rawType.includes("assign")) category = "assignment";
-  else if (rawType.includes("lab")) category = "lab";
-  else if (rawType.includes("exam")) category = "exam";
-  else if (rawType.includes("note")) category = "note";
-  else if (rawType.includes("file")) category = "file";
-  else if (["pdf", "doc", "pptx", "link", "image", "code", "zip"].includes(rawType)) {
+  if (item.category) {
+    category = item.category;
+  } else if (rawType.includes("assign")) {
+    category = "assignment";
+  } else if (rawType.includes("lab")) {
+    category = "lab";
+  } else if (rawType.includes("exam")) {
+    category = "exam";
+  } else if (rawType.includes("note")) {
+    category = "note";
+  } else if (rawType.includes("file")) {
+    category = "file";
+  } else if (["pdf", "doc", "pptx", "link", "image", "code", "zip"].includes(rawType)) {
     category = item.uploadedBy || item.uploaded_by || item.size ? "file" : "note";
   }
 
   const title = item.title || item.name || item.resourceTitle || "Untitled";
   const description = item.description || "";
   const subjectId = item.subjectId || item.subject_id || null;
-  const dueDate = item.dueDate || item.due_date || item.examDate || item.exam_date || item.date || null;
   const labNumber = item.labNumber ?? item.lab_number ?? null;
-  const status = item.status || null;
   const size = item.size || null;
   const uploadedBy = item.uploadedBy || item.uploaded_by || null;
+
+  const isSubmission = category === "assignment" || category === "lab";
+  const isExam = category === "exam";
+  const isStaticResource = category === "note" || category === "file";
+
+  // Assign appropriate date value and label:
+  // - Submissions have Due dates
+  // - Exams have Exam dates
+  // - Notes and Files have Upload/Added dates (never due dates or overdue)
+  let date = null;
+  let dateLabel = "Date";
+
+  if (isSubmission) {
+    date = item.dueDate || item.due_date || item.date || null;
+    dateLabel = "Due";
+  } else if (isExam) {
+    date = item.examDate || item.exam_date || item.dueDate || item.due_date || item.date || null;
+    dateLabel = "Exam Date";
+  } else if (isStaticResource) {
+    date = item.uploadedAt || item.created_at || item.createdAt || item.date || null;
+    dateLabel = category === "note" ? "Added" : "Uploaded";
+  } else {
+    date = item.dueDate || item.due_date || item.examDate || item.date || item.created_at || null;
+    dateLabel = "Date";
+  }
+
+  // Only student submissions have a pending/overdue/submitted status
+  // Notes, files, and exams do NOT have submission statuses
+  const status = isSubmission ? (item.status || "pending") : null;
 
   // Extract downloadable attachments
   const attachments = [];
@@ -90,10 +130,14 @@ function normalizeItem(item) {
   return {
     raw: item,
     category,
+    isSubmission,
+    isExam,
+    isStaticResource,
     title,
     description,
     subjectId,
-    dueDate,
+    date,
+    dateLabel,
     labNumber,
     status,
     size,
@@ -254,15 +298,31 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
   const subject = normalized.subjectId ? getSubject(normalized.subjectId) : null;
   const subjectColors = normalized.subjectId ? getColor(normalized.subjectId) : null;
 
-  // Calculate dynamic status if pending/overdue
+  // Calculate dynamic status if pending/overdue (only for submissions)
   let dynamicStatus = normalized.status;
-  if (dynamicStatus === "pending" && normalized.dueDate && new Date(normalized.dueDate) < new Date()) {
+  if (
+    normalized.isSubmission &&
+    dynamicStatus === "pending" &&
+    normalized.date &&
+    new Date(normalized.date) < new Date()
+  ) {
     dynamicStatus = "overdue";
   }
   const statusConfig = dynamicStatus ? statusBadgeConfig[dynamicStatus] : null;
 
-  const formattedDate = formatDate(normalized.dueDate);
-  const relativeDate = getRelativeDateLabel(normalized.dueDate, normalized.category === "exam");
+  const formattedDate = formatDate(normalized.date);
+
+  // Relative countdown ONLY for submissions and exams — NEVER for notes or files!
+  let relativeDate = null;
+  if (normalized.isSubmission) {
+    if (dynamicStatus === "submitted") {
+      relativeDate = "Submitted";
+    } else {
+      relativeDate = getRelativeDateLabel(normalized.date, false);
+    }
+  } else if (normalized.isExam) {
+    relativeDate = getRelativeDateLabel(normalized.date, true);
+  }
 
   const handleDownload = async (resource) => {
     if (resource.isLink) {
@@ -363,9 +423,20 @@ export default function ResourceDetailModal({ isOpen, onClose, item }) {
                 <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
                   <Calendar size={15} className="text-zinc-500 dark:text-zinc-400 shrink-0" />
                   <div className="min-w-0">
+                    <span className="text-zinc-500 dark:text-zinc-400 mr-1.5 font-medium">
+                      {normalized.dateLabel}:
+                    </span>
                     <span className="font-semibold text-zinc-900 dark:text-zinc-100">{formattedDate}</span>
                     {relativeDate && (
-                      <span className="ml-1.5 font-bold text-indigo-600 dark:text-indigo-400">
+                      <span
+                        className={`ml-1.5 font-bold ${
+                          relativeDate.includes("overdue")
+                            ? "text-rose-600 dark:text-rose-400"
+                            : relativeDate === "Submitted"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-indigo-600 dark:text-indigo-400"
+                        }`}
+                      >
                         ({relativeDate})
                       </span>
                     )}

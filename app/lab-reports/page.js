@@ -205,7 +205,7 @@ export default function LabReportsPage() {
               });
 
               const handleCardClick = () => {
-                setSelectedItem({ ...report, type: "lab" });
+                setSelectedItem({ ...report, type: "lab", category: "lab" });
               };
 
               return (

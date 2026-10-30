@@ -177,7 +177,7 @@ export default function FilesPage() {
               });
 
               const handleCardClick = () => {
-                setSelectedItem({ ...file, type: file.type || "file" });
+                setSelectedItem({ ...file, type: file.type || "file", category: "file" });
               };
 
               return (

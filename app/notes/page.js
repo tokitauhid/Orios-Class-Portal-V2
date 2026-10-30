@@ -224,7 +224,7 @@ export default function NotesPage() {
                       });
 
                       const handleCardClick = () => {
-                        setSelectedItem({ ...note, type: note.type || "note" });
+                        setSelectedItem({ ...note, type: note.type || "note", category: "note" });
                       };
 
                       return (

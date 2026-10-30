@@ -209,7 +209,7 @@ export default function AssignmentsPage() {
               });
 
               const handleCardClick = () => {
-                setSelectedItem({ ...assignment, type: "assignment" });
+                setSelectedItem({ ...assignment, type: "assignment", category: "assignment" });
               };
 
               return (
